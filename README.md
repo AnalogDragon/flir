@@ -10,3 +10,5 @@
 
 
 ![flir](https://github.com/AnalogDragon/flir/blob/master/1.jpg)
+
+![flir](https://github.com/AnalogDragon/flir/blob/master/readme.png)
