@@ -1,6 +1,8 @@
  #include "adc.h"
+ #include "key.h"
  #include "delay.h"
  #include "stm32f10x_adc.h"
+ #include "math.h"
 
 														   
 void  Adc_Init(void)
@@ -10,7 +12,6 @@ void  Adc_Init(void)
 
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA |RCC_APB2Periph_ADC1	, ENABLE );	  //使能ADC1通道时钟
  
-
 	RCC_ADCCLKConfig(RCC_PCLK2_Div6);   //设置ADC分频因子6 72M/6=12,ADC最大时间不能超过14M
 
 	//PA1 作为模拟通道输入引脚                         
@@ -56,20 +57,59 @@ u16 Get_Adc(u8 ch)
 	return ADC_GetConversionValue(ADC1);	//返回最近一次ADC1规则组的转换结果
 }
 
-
 u8 Get_Battery(void){
+	
 	u32 temp_val=0;
 	u8 t;
+	
+	static u16 temp_val_back0 = 0;
+	static u16 temp_val_back1 = 0;
+	static u16 temp_val_back2 = 0;
+	static u8 CntTimer = 0;
+	static u8 Battery_back = 0;
+	
+	if(Battery_Scan() != Battery_back){
+		CntTimer++;
+		if(CntTimer >= 10){
+			CntTimer = 0;
+			Battery_back = Battery_Scan();
+		}else{
+			if(temp_val_back2 != 0){
+				temp_val_back1 = temp_val_back2;
+				temp_val_back0 = temp_val_back2;
+				return temp_val_back2;
+			}
+		}
+	}else{
+		CntTimer = 0;
+	}
+	
 	for(t=0;t<8;t++){
 		temp_val+=Get_Adc(ADC_Channel_2);
 		delay_ms(2);
 	}
 	temp_val/=8;
 	if(temp_val<=2234)
-		return 0;
+		return 1;
 	else{
 		temp_val=(temp_val-2234)*100/350;
+		if(temp_val == 0){
+			temp_val = 1;
+		}
 	}
-	if((u16)temp_val>90)return 100;
-	return (u16)temp_val;
+	
+	if(Battery_Scan() == 1){
+		temp_val=temp_val*temp_val/100;
+	}
+	
+	temp_val_back2 = temp_val_back1;
+	temp_val_back1 = temp_val_back0;
+	temp_val_back0 = (u16)temp_val;
+	
+	if((u8)temp_val_back2>90)return 100;
+	return (u8)temp_val_back2;
 }
+
+float BatPct = 0;
+
+

@@ -18,8 +18,8 @@
 #define Set_Rst GPIOD->BSRR = GPIO_Pin_13;
 #define Clr_Rst GPIOD->BRR  = GPIO_Pin_13;
 
-#define Lcd_Light_ON   GPIOA->BSRR = GPIO_Pin_1;
-#define Lcd_Light_OFF  GPIOA->BRR  = GPIO_Pin_1;
+#define Lcd_Light_ON   GPIOA->BSRR = GPIO_Pin_6;
+#define Lcd_Light_OFF  GPIOA->BRR  = GPIO_Pin_6;
 
 #define BW  1
 #define Iron 2
@@ -63,7 +63,11 @@ void Draw_Camera(void);
 void Draw_Wait(void);
 u16 ReadPixel(u16 x,u8 y);
 void disp_open(void);
-void LCD_Pic2(u16 x, u8* pic);
+void LCD_Pic2(u16 x,u8 y,u8 leg, u8* pic);
+void disp_fast(void);
+void disp_slow(void);
+void Draw_BackPlay(void);
+
 
 
 #define White          0xFFFF

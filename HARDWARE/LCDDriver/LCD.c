@@ -12,6 +12,8 @@
 #include "stm32f10x_fsmc.h"
 #include "key.h"
 #include "pic.h"
+#include "myiic.h"
+#include "adc.h"
 /*
  * 函数名：LCD_GPIO_Config
  * 描述  ：根据FSMC配置LCD的I/O
@@ -309,7 +311,10 @@ WriteComm(0x29); //Display on
 	
 Lcd_Clear();
 
-Lcd_Light_ON;
+Lcd_Light_OFF;
+
+// Lcd_Light_ON;
+
 //Lcd_ColorBox(0,0,240,320,Yellow);
 
 
@@ -435,13 +440,13 @@ void LCD_Fill_Pic(u16 x, u16 y,u16 pic_H, u16 pic_V, const unsigned char* pic)
 
 
 
-void LCD_Pic2(u16 x, u8* pic)
+void LCD_Pic2(u16 x,u8 y,u8 leg, u8* pic)
 {
   unsigned long i;
-	BlockWrite(x,x,0,159);
-	for (i = 0; i < 160*2; i++)
+	BlockWrite(x,x,y,y+(leg-1));
+	for (i = 0; i < leg*2; i++)
 	{
-		*(__IO u16 *) (Bank1_LCD_D) = pic[319-i];
+		*(__IO u16 *) (Bank1_LCD_D) = pic[(leg*2-1)-i];
 	}
 }
 
@@ -540,25 +545,33 @@ void logo_move(void){
 void Draw_battery(u8 num){
 	u16 i;
 	u16 color;
-	u8 bat=Battery_Scan();
-	if(bat==0){
-		num/=5;
-		if(num<4)color=Red;
-		else if(num<8)color=Yellow;
-		else color=Green;
-		BlockWrite(24,30,5,24);
-		for (i = 0; i < 7*num; i++){
-			*(__IO u16 *) (Bank1_LCD_D) = color>>8;
-			*(__IO u16 *) (Bank1_LCD_D) = color;
-		}
-		for (i = 0; i < 7*(20-num); i++){
-			*(__IO u16 *) (Bank1_LCD_D) = 0;
-			*(__IO u16 *) (Bank1_LCD_D) = 0;
-		}
-	}else if(bat==1){
-		LCD_Fill_Pic(24,5,7,20,gImage_battery1);
-	}else if(bat==2){
+	u8 BatState=Battery_Scan();
+	static u8 num_add = 0;
+	
+	if(BatState == 2){
 		LCD_Fill_Pic(24,5,7,20,gImage_battery2);
+		return ;
+	}else if(BatState == 1){
+		num_add+=5;
+		if((num_add+num) > 100)
+			num_add = 0;
+		num += num_add;
+	}else{
+		num_add = 0;
+	}
+	
+	num/=5;
+	if(num<4)color=Red;
+	else if(num<8)color=Yellow;
+	else color=Green;
+	BlockWrite(24,30,5,24);
+	for (i = 0; i < 7*num; i++){
+		*(__IO u16 *) (Bank1_LCD_D) = color>>8;
+		*(__IO u16 *) (Bank1_LCD_D) = color;
+	}
+	for (i = 0; i < 7*(20-num); i++){
+		*(__IO u16 *) (Bank1_LCD_D) = 0;
+		*(__IO u16 *) (Bank1_LCD_D) = 0;
 	}
 }
 
@@ -769,23 +782,27 @@ void Draw_Wait(void){
 	LCD_Fill_Pic(91,8,13,16,gImage_wait);
 }
 
+void Draw_BackPlay(void){
+	LCD_Fill_Pic(75,5,9,9,gImage_backplay);
+}
 
+void disp_fast(void){    //快速刷新
+	get_data();    //获取数据
+	blowup();      //插值
+	get_img();      //插值转换为rgb图片
+	Draw_img();       //显示图片
+	Draw_data();       //显示数据
+	logo_move();       //运行指示
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void disp_slow(void){     //慢速刷新+按键操作刷新
+ 	BatPct=BatPct*0.95+(float)(Get_Battery())*0.05;
+// 	BatPct = Get_Battery();
+	if(BatPct>99)BatPct = 100;
+	Draw_battery((u8)BatPct);   //电量
+	Draw_menu();    //显示菜单
+	Draw_color();
+}
 
 
 

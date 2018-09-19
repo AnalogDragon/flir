@@ -46,7 +46,3 @@ u8 Battery_Scan(void){
 }
 
 
-
-
-
-

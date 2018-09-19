@@ -15,39 +15,26 @@
 long data[40][40]={0};
 long ext[3]={0,0,0};
 u8 ext_add[2]={0,0};
+u16 RDFlag;
 extern u8 test_mod;
 extern u8 color_mod;
-extern u8 Save_Times[4];
-extern u32 SaveTimes;
-
-void disp_fast(void){    //快速刷新
-	get_data();    //获取数据
-	blowup();      //插值
-	get_img();      //插值转换为rgb图片
-	Draw_img();       //显示图片
-	Draw_data();       //显示数据
-	logo_move();       //运行指示
-	LED0=~LED0;     //刷新率测试
-}
-
-void disp_slow(void){     //慢速刷新+按键操作刷新
-	Draw_battery(Get_Battery());   //电量
-	Draw_menu();    //显示菜单
-	Draw_color();
-}
+extern u8 Save_Times[2];
+extern u16 SaveTimes;
 
 
 void key_do(void){
 	u8 key=KEY_Scan(0);
 	u8 i;
-	u8 j=0;
+	u8 j=0x20;
 	u8 buf=0;
+	u8 PlayFlag = 0;
+	RDFlag = 0;
 	if(key==1){                     //更换色彩卡
 		switch (color_mod){ 
 			case BW:color_mod=Iron;break;
 			case Iron:color_mod=RB;break;
 			case RB:color_mod=BW;break;
-			default:break;
+			default:color_mod=Iron;break;
 		}
 	}
 	if(key==2){               //更换测温点模式
@@ -55,7 +42,7 @@ void key_do(void){
 			case none:test_mod=midd;break;
 			case midd:test_mod=exts;break;
 			case exts:test_mod=none;break;
-			default:break;
+			default:test_mod=none;break;
 		}
 	}
 	if(key==3){             //暂停画面   
@@ -64,53 +51,77 @@ void key_do(void){
 		do{
 			i++;
 			if(i==255){
-				Lcd_ColorBox(75,5,9,9,Black);
+				Lcd_ColorBox(75,5,9,9,Black);//闪烁图标
 				j++;
-				j&=0x8f;
+				j&=0xEF;
 			}
-			if(i==127)Lcd_ColorBox(75,5,9,9,White);
+			if(i==127){
+				if(PlayFlag != 0)
+					Draw_BackPlay();
+				else 
+					Lcd_ColorBox(75,5,9,9,White);
+			}
+			if(i%16 == 0)disp_slow();         ///160ms刷新电量
 			key=KEY_Scan(0);
-			if(j==0x88){
+			if(j==0xE8){
 				j=0;
 				key=Play_BadApple();
 			}
-			if(key==1)j=0x80;
+			if(key==1){
+				if((j&0x80)!=0)
+					j=0;
+				j|=0x80;
+				j&=0xF0;
+				RDFlag=read_saved(RDFlag,0);
+				PlayFlag = 1;
+			}
 			if(key==2){               //更换测温点模式
+				j=0;
 				switch (test_mod){
 					case none:test_mod=midd;break;
 					case midd:test_mod=exts;break;
 					case exts:test_mod=none;break;
-					default:break;
+					default:test_mod=none;break;
 				}
 				Draw_img();       //显示图片
 				Draw_data();       //显示数据
-				Draw_battery(Get_Battery());   //电量
-				Draw_menu();    //显示菜单
-				Draw_color();
+				disp_slow();       //<---
 			}
 			if(key==4){                 //保存截图
-				Draw_Wait();
-				if(SD_Init()==0){
-					save_bmp();
+				if(PlayFlag == 0){
+					Draw_Wait();
+					if(SD_Init()==0){
+						save_bmp();
+					}
+					Draw_Camera();
+				}else{
+					RDFlag=read_saved(RDFlag,1);
+					if((j&0x80) == 0x80){
+						if((j&0x40)!=0)
+							j=0;
+						j|=0x40;
+						j&=0xF0;
+					}
 				}
-				Draw_Camera();
 			}if(key==3){
 				buf=0;
-				while(KEY_Scan(1)==3){
+				while(KEY_Scan(1) == 3){
 					delay_ms(1);
 					buf++;
 					if(buf>50){
 				    key=0;
 						buf=0;
 						TIM3->CCR1-=10;
-						if(TIM3->CCR1==0)TIM3->CCR1=100;
-						if(TIM3->CCR1==10)break;
+						if(TIM3->CCR1 == 0)TIM3->CCR1=100;
+						if(TIM3->CCR1 == 10)break;
 					}
 				}
 			}
 			delay_ms(5);
 		}while(key==0 || key==1 || key==2 || key==4);
-		Lcd_ColorBox(75,5,9,9,Black);
+		Lcd_ColorBox(75,5,9,9,Black);   //消除暂停图标
+		if(AT24CXX_ReadOneByte(0x10) != (TIM3->CCR1/10)) //存储亮度
+			AT24CXX_WriteOneByte(0x10,TIM3->CCR1/10);
 	}
 	if(key==4){                 //保存截图
 		Draw_Wait();
@@ -126,27 +137,37 @@ void key_do(void){
 
 u8 init_all(void){
 	u8 state=0;
-	delay_init();	    	 //延时函数初始化	  
-	LED_Init();		  	//初始化与LED连接的硬件接口
+	u8 buf;
+	delay_init();	  //延时函数初始化	  
+	LED_Init();		  //初始化与LED连接的硬件接口
 	Lcd_Initialize();
 	SD_Init();
 	state=read_boot_bmp();
 	uart_init(115200);
-	TIM3_PWM_Init(100-1,180-1);
-	TIM3->CCR1=100;
-	Adc_Init();
 	IIC_Init();
+	buf=AT24CXX_ReadOneByte(0x10);
+	if(buf>10 || buf<1){
+		buf=10;
+		AT24CXX_WriteOneByte(0x10,buf);
+	}
+	TIM3_PWM_Init(100-1,180-1);
+	TIM3->CCR1=buf*10;
+	Adc_Init();
 	Init_AMG8833();
 	get_data();    //获取数据
   KEY_Init();
-	AT24CXX_Read(0,(u8*)Save_Times,4);  //读取次数
-	if(Save_Times[0] == 0xff && Save_Times[1] == 0xff && Save_Times[2] == 0xff && Save_Times[3] == 0xff){
-		Save_Times[0]=Save_Times[1]=Save_Times[2]=Save_Times[3]=0x00;
-		AT24CXX_Write(0,(u8*)Save_Times,4);
+	if(KEY_Scan(0) == 1)GetFileNum();
+	AT24CXX_Read(0,(u8*)Save_Times,2);  //读取次数
+	if(Save_Times[0] == 0xff && Save_Times[1] == 0xff){
+		Save_Times[0]=Save_Times[1]=0x00;
+		AT24CXX_Write(0,(u8*)Save_Times,2);
 	}
-	SaveTimes=Save_Times[0]|Save_Times[1]<<16;
-	if(state)delay_ms(1000);
-	else delay_ms(100);
+	SaveTimes=Save_Times[0]|Save_Times[1]<<8;
+	for(buf=0;buf<6;buf++){
+		BatPct=Get_Battery();
+	}
+	if(state)delay_ms(900);
+	BatPct=Get_Battery();
 	return 0;
 }
 
@@ -155,6 +176,7 @@ int main(void){
  	NVIC_SetVectorTable(NVIC_VectTab_FLASH,APP_ADDR&0xFFFFF);
 	init_all();      //初始化系统
 	DrawBack();      //绘制背景
+	
 	disp_slow();
 	disp_fast();
 	//Play_BadApple();         //test

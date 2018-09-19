@@ -20,8 +20,8 @@ extern long ext[3];
 extern u8 ext_add[2];
 extern u8 test_mod;
 extern u8 color_mod;
-u8 Save_Times[4]={0,0,0,0};
-u32 SaveTimes=0;
+u8 Save_Times[2]={0,0};
+u16 SaveTimes=0;
 char name_buf[35];
 char dir_buf[12];
 
@@ -110,7 +110,7 @@ void get_num_line(u8 x,int num,u8 bl,u8 line){
 				Image_line[(x+22)*3]=Image_line[(x+22)*3+1]=Image_line[(x+22)*3+2]=0xff;
 				Image_line[(x+23)*3]=Image_line[(x+23)*3+1]=Image_line[(x+23)*3+2]=0xff;
 			}
-		}else if(num>=-99){	
+		}else if(num>=-99){
 			num=-num;
 			for(i=0;i<9;i++){
 				Image_line[(x+11+i)*3]=Image_line[(x+11+i)*3+1]=Image_line[(x+11+i)*3+2]=Image_num_9[line*90+num/10%10*9+i];
@@ -354,13 +354,16 @@ void box_mid(void){
 
 
 u8 save_bmp(void){			
-	u32 i;
+	u16 i;
 	
 	FIL fdst_f;
 	FRESULT res_f;
 	UINT bw_f;  
 	long File_Byte;
 
+	if(SaveTimes>60000)
+		return 1;
+	
 	if(f_mount(&fs,"0:",1)!=FR_OK)return 1;
 	
 	if(f_opendir(&dr, "0:/picture")!=FR_OK){
@@ -369,9 +372,8 @@ u8 save_bmp(void){
 	}
 	
 	SaveTimes++;
-	if(SaveTimes>99999999)SaveTimes=0;	
-	sprintf(name_buf,"0:/picture/%08d/%08d.bmp",SaveTimes/20,SaveTimes);
-	sprintf(dir_buf,"0:/picture/%08d",SaveTimes/20);
+	sprintf(name_buf,"0:/picture/%04d/%05d.bmp",(SaveTimes-1)/20,SaveTimes);
+	sprintf(dir_buf,"0:/picture/%04d",(SaveTimes-1)/20);
 	
 	if(f_opendir(&dr, dir_buf)!=FR_OK){
 		f_mkdir(dir_buf);
@@ -379,24 +381,25 @@ u8 save_bmp(void){
 	res_f = f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ );
 	
 	
-	while(res_f==FR_OK){
+	while(res_f == FR_OK){
+		if(SaveTimes>60000){
+			return 1;             //存满了，跳出
+		}
 		SaveTimes++;
-		if(SaveTimes>99999999)SaveTimes=0;	
 		f_close(&fdst_f); 
 		f_closedir(&dr);
-		sprintf(name_buf,"0:/picture/%08d/%08d.bmp",SaveTimes/20,SaveTimes);
-		sprintf(dir_buf,"0:/picture/%08d",SaveTimes/20);
+		sprintf(name_buf,"0:/picture/%04d/%05d.bmp",(SaveTimes-1)/20,SaveTimes);
+		sprintf(dir_buf,"0:/picture/%04d",(SaveTimes-1)/20);
 		if(f_opendir(&dr, dir_buf)!=FR_OK){
 			f_mkdir(dir_buf);
 		}
 		res_f = f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ );
 	}
+	
 	Save_Times[0]=SaveTimes&0xff;
 	Save_Times[1]=(SaveTimes>>8)&0xff;	
-	Save_Times[2]=(SaveTimes>>16)&0xff;	
-	Save_Times[3]=(SaveTimes>>24)&0xff;	
-	AT24CXX_Write(0,(u8*)Save_Times,4);	
-	
+	AT24CXX_Write(0,(u8*)Save_Times,2);	
+	/*-------save grap-------*/
 	File_Byte = 0;
 	f_open( &fdst_f, name_buf , FA_CREATE_NEW | FA_READ | FA_WRITE );
 	f_write(&fdst_f, Image_head, 54, &bw_f);
@@ -405,9 +408,7 @@ u8 save_bmp(void){
 	
 // 	FAT_SAVABuff(name_buf,(u8*)Image_head,54);
 	
-	
-	
-	
+
 	for(i=0;i<120;i++){
 		if(i%3==0){
 		  get_bmp_line(i/3);
@@ -478,15 +479,83 @@ u8 save_bmp(void){
 	File_Byte+=360;
 	f_lseek(&fdst_f,File_Byte);
 	f_write(&fdst_f, Image_line, 360, &bw_f);
+	File_Byte+=360;
+	f_lseek(&fdst_f,File_Byte);
+	
+	//54414byte
+	/*-------save data-------*/
+	for(i=0;i<40;i++){
+		f_write(&fdst_f, data[i], 40*4, &bw_f);
+		File_Byte+=40*4;
+		f_lseek(&fdst_f,File_Byte);
+	}
+	
+	Image_line[0]=color_mod;
+	Image_line[1]=test_mod;
+	
+	for(i=0;i<3;i++){
+		Image_line[i*4+2] = (ext[i]>>24)&0xff;
+		Image_line[i*4+3] = (ext[i]>>16)&0xff;
+		Image_line[i*4+4] = (ext[i]>>8)&0xff;
+		Image_line[i*4+5] = (ext[i]>>0)&0xff;
+	}
+	
+	Image_line[14] = ext_add[0];
+	Image_line[15] = ext_add[1];
+	
+	f_write(&fdst_f, Image_line, 16, &bw_f);
+	
+	f_close(&fdst_f); 
+	f_closedir(&dr);
+	f_mount(&fs,NULL,1); //save data
+	
+	return 0;
+}
+
+void GetFileNum(void){
+	
+	FIL fdst_f;
+	u16 SaveTimesBak = 0;
+	
+	SaveTimes=1;
+	
+	if(f_mount(&fs,"0:",1)!=FR_OK){
+		Save_Times[0]=0;
+		Save_Times[1]=0;
+		AT24CXX_Write(0,(u8*)Save_Times,2);
+		return;
+	}
+	
+	if(f_opendir(&dr, "0:/picture")!=FR_OK){
+		Save_Times[0]=0;
+		Save_Times[1]=0;
+		AT24CXX_Write(0,(u8*)Save_Times,2);
+		return;
+	}
+	
+	while((SaveTimes < (SaveTimesBak+100)) && (SaveTimes < 60000)){
+		sprintf(name_buf,"0:/picture/%04d/%05d.bmp",(SaveTimes-1)/20,SaveTimes);
+		sprintf(dir_buf,"0:/picture/%04d",(SaveTimes-1)/20);
+		if(f_opendir(&dr, dir_buf)==FR_OK){
+			if(f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ )!=FR_OK){
+				SaveTimesBak = SaveTimes;
+			}
+			f_closedir(&dr);
+		}
+		SaveTimes ++;
+	}
+	
+	SaveTimes = SaveTimesBak;
+	
+	Save_Times[0]=SaveTimes&0xff;
+	Save_Times[1]=(SaveTimes>>8)&0xff;
+	AT24CXX_Write(0,(u8*)Save_Times,2);	
 	
 	f_close(&fdst_f); 
 	f_closedir(&dr);
 	f_mount(&fs,NULL,1); 
 	
-	return 0;
 }
-
-
 
 // u8 test_line[160*3]={0};
 
@@ -588,9 +657,7 @@ u8 check_str(u8 *str1,const u8 *str2,u16 times){
 
 
 
-
-	u8 read_buf[480]={0};
-
+u8 read_buf[480]={0};
 
 u8 read_boot_bmp(void){
 	u16 i,j,buf;	
@@ -614,7 +681,7 @@ u8 read_boot_bmp(void){
 			read_buf[1+j*2]=0xff&(buf>>8);
 			read_buf[0+j*2]=0xff&(buf);
 		}
-		LCD_Pic2(127-i,read_buf);
+		LCD_Pic2(127-i,0,160,read_buf);
 	}
 	f_close(&fdst_f); 
 	f_closedir(&dr);
@@ -625,4 +692,390 @@ u8 read_boot_bmp(void){
 
 
 
+//返回0xffff失败，返回数字为下一次的输入数字，首次数字为0
+u16 read_saved(u16 num,u8 flag){		
+	u16 i,j,Databuf;
+	u8 filesw = 0xff;
+	FIL fdst_f;
+	UINT bw_f;  
+	long File_Byte;
+	
+	Databuf=0;
+	
+	if(SaveTimes<1)  
+		return 0;
+	
+	if(SaveTimes < num){
+		if(flag == 1)
+			num = 0;
+	}
+	
+	if(0 == num){
+		if(flag == 0)
+			num = SaveTimes+1;
+	}
+	
+	if(f_mount(&fs,"0:",1)!=FR_OK)
+		return 0;
+	
+	if(f_opendir(&dr, "0:/picture")!=FR_OK)
+		return 0;
+	
+	if(flag == 0){
+		
+		num--;
+		
+		if(num == 0)
+			num = SaveTimes; //从头检查
+		
+		for(;;){
+			sprintf(name_buf,"0:/picture/%04d/%05d.bmp",(num-1)/20,num);
+			sprintf(dir_buf,"0:/picture/%04d",(num-1)/20);
+			if(f_opendir(&dr, dir_buf)==FR_OK){
+				if(f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ )==FR_OK){
+					f_read(&fdst_f, read_buf, 54, &bw_f);
+					if(check_str(read_buf,Image_head,54) == 0){
+						if(fdst_f.fsize == 60830){  //check new
+							filesw = 2;
+							break;
+						}
+						if(fdst_f.fsize == 54414){  //check new
+							filesw = 1;
+							break;
+						}
+					}
+				}
+			}
+			f_close(&fdst_f);
+			f_closedir(&dr);
+			num--;
+			if(num == 0){
+				num = SaveTimes; //从头检查
+				sprintf(name_buf,"0:/picture/%04d/%05d.bmp",(num-1)/20,num);
+				sprintf(dir_buf,"0:/picture/%04d",(num-1)/20);
+				if(f_opendir(&dr, dir_buf)==FR_OK){
+					if(f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ )==FR_OK){
+						f_read(&fdst_f, read_buf, 54, &bw_f);
+						if(check_str(read_buf,Image_head,54) == 0){
+							if(fdst_f.fsize == 60830){  //check new
+								filesw = 2;
+								break;
+							}
+							if(fdst_f.fsize == 54414){  //check new
+								filesw = 1;
+								break;
+							}
+						}
+					}
+				}
+				return 0;   ///none img can read
+			}
+		}
+		
+	}else if(flag == 1){
+		
+		num++;
+		
+		if(num>SaveTimes)
+			num=1;
+		
+		for(;;){
+			sprintf(name_buf,"0:/picture/%04d/%05d.bmp",(num-1)/20,num);
+			sprintf(dir_buf,"0:/picture/%04d",(num-1)/20);
+			if(f_opendir(&dr, dir_buf)==FR_OK){
+				if(f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ )==FR_OK){
+					f_read(&fdst_f, read_buf, 54, &bw_f);
+					if(check_str(read_buf,Image_head,54) == 0){
+						if(fdst_f.fsize == 60830){  //check new
+							filesw = 2;
+							break;
+						}
+						if(fdst_f.fsize == 54414){  //check new
+							filesw = 1;
+							break;
+						}
+					}
+				}
+			}
+			f_close(&fdst_f);
+			f_closedir(&dr);
+			num++;
+			if(num>SaveTimes){
+				num = 1; //从头检查
+				sprintf(name_buf,"0:/picture/%04d/%05d.bmp",(num-1)/20,num);
+				sprintf(dir_buf,"0:/picture/%04d",(num-1)/20);
+				if(f_opendir(&dr, dir_buf)==FR_OK){
+					if(f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ )==FR_OK){
+						f_read(&fdst_f, read_buf, 54, &bw_f);
+						if(check_str(read_buf,Image_head,54) == 0){
+							if(fdst_f.fsize == 60830){  //check new
+								filesw = 2;
+								break;
+							}
+							if(fdst_f.fsize == 54414){  //check new
+								filesw = 1;
+								break;
+							}
+						}
+					}
+				}
+				return 0;   ///none img can read
+			}
+		}
+		
+		
+	}
+	
+	
+	if(filesw == 1){
+		
+		test_mod=none;
+		
+		for(i=0;i<120;i++){   //读取图片区
+			f_lseek(&fdst_f,i*120*3+54);  //改变指针
+			f_read(&fdst_f, read_buf, 360, &bw_f);
+			for(j=0;j<120;j++){
+				Databuf=(0xFFFF&((read_buf[0+j*3]&0xf8)>>3|(read_buf[1+j*3]&0xf8)<<3|(read_buf[2+j*3]&0xf8)<<8));//更改格式
+				read_buf[1+j*2]=0xff&(Databuf>>8);
+				read_buf[0+j*2]=0xff&(Databuf);
+			}
+			LCD_Pic2(123-i,40,120,read_buf);
+		}
+		
+		for(i=0;i<40;i++){
+			for(j=0;j<40;j++){
+				data[i][j] = 0xffff;
+			}
+		}
+		
+		ext[0]=ext[1]=ext[2]=0;
+		ext_add[0]=0;
+		ext_add[1]=63;
+		Draw_data();       //显示数据//显示清零
+		
+		for(i=0;i<18;i++){   //读取图片区46800
+			f_lseek(&fdst_f,i*120*3+46863);  //改变指针
+			f_read(&fdst_f, read_buf, 60, &bw_f);
+			for(j=0;j<20;j++){
+				Databuf=(0xFFFF&((read_buf[0+j*3]&0xf8)>>3|(read_buf[1+j*3]&0xf8)<<3|(read_buf[2+j*3]&0xf8)<<8));//更改格式
+				read_buf[1+j*2]=0xff&(Databuf>>8);
+				read_buf[0+j*2]=0xff&(Databuf);
+			}
+			LCD_Pic2(17-i,10,20,read_buf);
+		}
+		
+		for(i=0;i<18;i++){   //读取图片区46800
+			f_lseek(&fdst_f,i*120*3+47100);  //改变指针
+			f_read(&fdst_f, read_buf, 60, &bw_f);
+			for(j=0;j<20;j++){
+				Databuf=(0xFFFF&((read_buf[0+j*3]&0xf8)>>3|(read_buf[1+j*3]&0xf8)<<3|(read_buf[2+j*3]&0xf8)<<8));//更改格式
+				read_buf[1+j*2]=0xff&(Databuf>>8);
+				read_buf[0+j*2]=0xff&(Databuf);
+			}
+			LCD_Pic2(127-i,10,20,read_buf);
+		}
+		
+		f_lseek(&fdst_f,43254);  //改变指针
+		f_read(&fdst_f, read_buf, 3, &bw_f);
+		if(check_str(read_buf,Image_line_Iron,3) == 0){
+			color_mod=Iron;
+		}else if(check_str(read_buf,Image_line_RB,3) == 0){
+			color_mod=RB;
+		}else if(check_str(read_buf,Image_line_BW,3) == 0){
+			color_mod=BW;
+		}
+		Draw_color();
+		
+		f_close(&fdst_f); 
+		f_closedir(&dr);
+		f_mount(&fs,NULL,1); 
+		
+	}else if(filesw == 2){	
+		
+		File_Byte = 54414;
+		f_lseek(&fdst_f,File_Byte);  //改变指针
+		
+		for(i=0;i<40;i++){
+			f_read(&fdst_f, data[i], 40*4, &bw_f);
+			File_Byte+=40*4;
+			f_lseek(&fdst_f,File_Byte);
+		}
+		
+		f_read(&fdst_f, read_buf, 16, &bw_f);
+		
+		color_mod = read_buf[0];
+		test_mod  = read_buf[1];
+		
+		for(i=0;i<3;i++){
+			ext[i] = (read_buf[i*4+2]<<24)|(read_buf[i*4+3]<<16)|(read_buf[i*4+4]<<8)|(read_buf[i*4+5]<<0);
+		}
+		
+		ext_add[0]=read_buf[14];
+		ext_add[1]=read_buf[15];
+		
+		Draw_img();       //显示图片
+		Draw_data();       //显示数据
+		disp_slow();
+		
+		f_close(&fdst_f); 
+		f_closedir(&dr);
+		f_mount(&fs,NULL,1); 
+		
+	}
+	
+	Draw_BackPlay();
+	if(flag == 0)
+		return num--;
+	if(flag == 1)
+		return num++;
+	
+	return 0;
+}
+
+
+// u16 read_saved(u16 num){			
+// 	u16 i,j,buf;	
+// 	
+// 	FIL fdst_f;
+// 	FRESULT res_f;
+// 	UINT bw_f;  
+// 	long File_Byte;
+// 	
+// 	if(SaveTimes<1)  
+// 		return 0;
+// 	
+// 	if(SaveTimes <= num)
+// 		num = 0;
+// 	
+// 	num = SaveTimes-num;
+// 	
+// 	if(f_mount(&fs,"0:",1)!=FR_OK)
+// 		return 0;
+// 	
+// 	if(f_opendir(&dr, "0:/picture")!=FR_OK)
+// 		return 0;
+// 	
+// 	for(;;){
+// 		sprintf(name_buf,"0:/picture/%04d/%05d.bmp",(num-1)/20,num);
+// 		sprintf(dir_buf,"0:/picture/%04d",(num-1)/20);
+// 		if(f_opendir(&dr, dir_buf)==FR_OK){
+// 			if(f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ )==FR_OK){
+// 				f_read(&fdst_f, read_buf, 54, &bw_f);
+// 				if(check_str(read_buf,Image_head,54) == 0){
+// 					break;
+// 				}
+// 			}
+// 		}
+// 		f_close(&fdst_f); 
+// 		f_closedir(&dr);
+// 		num--;
+// 		if(num == 0)
+// 			return 0;   ///none img can read
+// 	}
+// 	
+// 	for(i=0;i<120;i++){   //读取图片区
+// 		f_lseek(&fdst_f,i*120*3+54);  //改变指针
+// 		res_f = f_read(&fdst_f, read_buf, 360, &bw_f);  //读取360字
+// 		if(res_f!=FR_OK)break;
+// 		for(j=0;j<120;j++){
+// 			buf=0xFFFF&((read_buf[0+j*3]&0xf8)>>3|(read_buf[1+j*3]&0xf8)<<3|(read_buf[2+j*3]&0xf8)<<8);//更改格式
+// 			read_buf[1+j*2]=0xff&(buf>>8);
+// 			read_buf[0+j*2]=0xff&(buf);
+// 		}
+// 		LCD_Pic2(123-i,40,120,read_buf);
+// 	}
+// 	
+// 	while(1);
+// 	
+// 	
+// 	Save_Times[0]=SaveTimes&0xff;
+// 	Save_Times[1]=(SaveTimes>>8)&0xff;	
+// 	AT24CXX_Write(0,(u8*)Save_Times,2);	
+// 	
+// 	File_Byte = 0;
+// 	f_open( &fdst_f, name_buf , FA_CREATE_NEW | FA_READ | FA_WRITE );
+// 	f_write(&fdst_f, Image_head, 54, &bw_f);
+// 	File_Byte+=54;
+// 	f_lseek(&fdst_f,File_Byte);
+// 	
+// // 	FAT_SAVABuff(name_buf,(u8*)Image_head,54);
+// 	
+
+// 	for(i=0;i<120;i++){
+// 		if(i%3==0){
+// 		  get_bmp_line(i/3);
+// 		}
+// 		if(test_mod==midd && i>34 && i<57){
+// 			box_mid();
+// 			if(i>36 && i<55)
+// 			  get_num_line(44,(int)(ext[2])*10/4,1,i-37);
+// 		}
+// // 		FAT_SAVABuff(name_buf,(u8*)Image_line,360);
+// 		f_write(&fdst_f, Image_line, 360, &bw_f);
+// 		File_Byte+=360;
+// 		f_lseek(&fdst_f,File_Byte);
+// 		
+// 	}
+// 	if(color_mod==Iron){
+// 		for(i=0;i<8;i++){
+// // 			FAT_SAVABuff(name_buf,(u8*)Image_line_Iron,360);
+// 			f_write(&fdst_f, Image_line_Iron, 360, &bw_f);
+// 			File_Byte+=360;
+// 			f_lseek(&fdst_f,File_Byte);
+// 		}
+// 	}else if(color_mod==RB){
+// 		for(i=0;i<8;i++){
+// // 			FAT_SAVABuff(name_buf,(u8*)Image_line_RB,360);			
+// 			f_write(&fdst_f, Image_line_RB, 360, &bw_f);
+// 			File_Byte+=360;
+// 			f_lseek(&fdst_f,File_Byte);
+// 		}
+// 	}else if(color_mod==BW){
+// 		for(i=0;i<8;i++){
+// // 			FAT_SAVABuff(name_buf,(u8*)Image_line_BW,360);
+// 			f_write(&fdst_f, Image_line_BW, 360, &bw_f);
+// 			File_Byte+=360;
+// 			f_lseek(&fdst_f,File_Byte);
+// 		}
+// 	}
+// 	get_Black_line();
+// // 	FAT_SAVABuff(name_buf,(u8*)Image_line,360);
+// // 	FAT_SAVABuff(name_buf,(u8*)Image_line,360);
+// 	
+// 	f_write(&fdst_f, Image_line, 360, &bw_f);
+// 	File_Byte+=360;
+// 	f_lseek(&fdst_f,File_Byte);
+// 	
+// 	f_write(&fdst_f, Image_line, 360, &bw_f);
+// 	File_Byte+=360;
+// 	f_lseek(&fdst_f,File_Byte);
+// 	
+// 	for(i=0;i<18;i++){
+// 	  get_Black_line();
+// 		get_num_line(3,(int)(ext[0])*10/4,0,i);
+// 		get_num_line(82,(int)(ext[1])*10/4,0,i);
+// // 		FAT_SAVABuff(name_buf,(u8*)Image_line,360);
+// 		f_write(&fdst_f, Image_line, 360, &bw_f);
+// 		File_Byte+=360;
+// 		f_lseek(&fdst_f,File_Byte);
+// 	}
+// 	get_Black_line();
+// // 	FAT_SAVABuff(name_buf,(u8*)Image_line,360);
+// // 	FAT_SAVABuff(name_buf,(u8*)Image_line,360);
+// // 	FAT_SAVABuff(name_buf,(u8*)Image_line,360);
+// 	
+// 	f_write(&fdst_f, Image_line, 360, &bw_f);
+// 	File_Byte+=360;
+// 	f_lseek(&fdst_f,File_Byte);
+// 	f_write(&fdst_f, Image_line, 360, &bw_f);
+// 	File_Byte+=360;
+// 	f_lseek(&fdst_f,File_Byte);
+// 	f_write(&fdst_f, Image_line, 360, &bw_f);
+// 	
+// 	f_close(&fdst_f); 
+// 	f_closedir(&dr);
+// 	f_mount(&fs,NULL,1); 
+// 	
+// 	return 0;
+// }
 
