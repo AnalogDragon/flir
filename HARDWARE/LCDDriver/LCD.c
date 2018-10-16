@@ -786,6 +786,17 @@ void Draw_BackPlay(void){
 	LCD_Fill_Pic(75,5,9,9,gImage_backplay);
 }
 
+void Draw_Warning(void){
+	int max=(int)(ext[0])*10/4;
+	int min=(int)(ext[1])*10/4;
+	if(max>1250 || min<-550   //超过最值
+		|| BatPct<5){					//电量过低
+			LCD_Fill_Pic(52,18,12,13,gImage_Warning);
+	}else{
+		Lcd_ColorBox(52,18,12,13,Black);   //消除图标
+	}
+}
+
 void disp_fast(void){    //快速刷新
 	get_data();    //获取数据
 	blowup();      //插值
@@ -802,6 +813,7 @@ void disp_slow(void){     //慢速刷新+按键操作刷新
 	Draw_battery((u8)BatPct);   //电量
 	Draw_menu();    //显示菜单
 	Draw_color();
+	Draw_Warning();
 }
 
 

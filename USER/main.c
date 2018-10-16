@@ -184,7 +184,7 @@ int main(void){
 		key_do();
 		disp_slow();
 		disp_fast();
-		if(USART_RX_BUF==0)delay_ms(60);
+		if(USART_RX_BUF==0)delay_ms(60);	//´®¿Ú12ms
 		else delay_ms(48);
 		if(color_mod==RB)delay_ms(5);
 		if(color_mod==BW)delay_ms(6);

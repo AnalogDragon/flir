@@ -67,7 +67,7 @@ void LCD_Pic2(u16 x,u8 y,u8 leg, u8* pic);
 void disp_fast(void);
 void disp_slow(void);
 void Draw_BackPlay(void);
-
+void Draw_Warning(void);
 
 
 #define White          0xFFFF
