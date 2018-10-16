@@ -29,10 +29,18 @@
 #define midd 1
 #define exts 2
 
-#define t1 1000/5000     //gain
-#define t2 2000/5000
-#define t3 3000/5000
-#define t4 4000/5000
+// #define t1 1000/5000     //gain
+// #define t2 2000/5000
+// #define t3 3000/5000
+// #define t4 4000/5000
+
+#define t1 1000/8000     //gain
+#define t2 2000/8000
+#define t3 3000/8000
+#define t4 4000/8000
+#define t5 5000/8000
+#define t6 6000/8000
+#define t7 7000/8000
 
 
 //Lcd初始化及其低级控制函数

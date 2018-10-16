@@ -15,7 +15,7 @@
 FATFS fs;
 DIR dr;
 
-extern long data[40][40];
+extern long data[59][59];
 extern long ext[3];
 extern u8 ext_add[2];
 extern u8 test_mod;
@@ -53,29 +53,36 @@ static FRESULT FAT_SAVABuff1( char *path ,u8 *DataBuff ,u16 DataLength ){
 */
 void get_bmp_line(u8 row){
 	u8 i;
-	for(i=0;i<40;i++){
-		Image_line[i*9]=Image_line[i*9+3]=Image_line[i*9+6]=(u8)((((data[39-row][39-i]>>0)&0xff)<<3)&0xff);
-		Image_line[i*9+1]=Image_line[i*9+1+3]=Image_line[i*9+1+6]=(u8)((((data[39-row][39-i]>>6)&0xff)<<3)&0xff);
-		Image_line[i*9+2]=Image_line[i*9+2+3]=Image_line[i*9+2+6]=(u8)((((data[39-row][39-i]>>11)&0xff)<<3)&0xff);
+	for(i=0;i<59;i++){
+		Image_line[i*6+0+3]=Image_line[i*6+0+6]=(u8)((((data[58-row][58-i]>>0)&0xff)<<3)&0xff);
+		Image_line[i*6+1+3]=Image_line[i*6+1+6]=(u8)((((data[58-row][58-i]>>6)&0xff)<<3)&0xff);
+		Image_line[i*6+2+3]=Image_line[i*6+2+6]=(u8)((((data[58-row][58-i]>>11)&0xff)<<3)&0xff);
 	}
+	Image_line[0]=(u8)((((data[58-row][58-0]>>0)&0xff)<<3)&0xff);
+	Image_line[1]=(u8)((((data[58-row][58-0]>>6)&0xff)<<3)&0xff);
+	Image_line[2]=(u8)((((data[58-row][58-0]>>11)&0xff)<<3)&0xff);
+	Image_line[357]=(u8)((((data[58-row][58-58]>>0)&0xff)<<3)&0xff);
+	Image_line[358]=(u8)((((data[58-row][58-58]>>6)&0xff)<<3)&0xff);
+	Image_line[359]=(u8)((((data[58-row][58-58]>>11)&0xff)<<3)&0xff);
+	
 	if(test_mod==midd){
-		if(row==20){
-			Image_line[20*9]=Image_line[20*9+3]=Image_line[20*9+6]=0;
-			Image_line[20*9+1]=Image_line[20*9+1+3]=Image_line[20*9+1+6]=0;
-			Image_line[20*9+2]=Image_line[20*9+2+3]=Image_line[20*9+2+6]=0;
+		if(row==29){
+			Image_line[29*6+0+3]=Image_line[29*6+0+6]=0;
+			Image_line[29*6+1+3]=Image_line[29*6+1+6]=0;
+			Image_line[29*6+2+3]=Image_line[29*6+2+6]=0;
 		}
 	}else if(test_mod==exts){
-		if(ext_add[0]/8*5+2==row){
-			i=(7-(ext_add[0]%8))*5+2;
-			Image_line[i*9]=Image_line[i*9+3]=Image_line[i*9+6]=0;
-			Image_line[i*9+1]=Image_line[i*9+1+3]=Image_line[i*9+1+6]=0;
-			Image_line[i*9+2]=Image_line[i*9+2+3]=Image_line[i*9+2+6]=0;
+		if(ext_add[0]/8*8+1==row){
+			i=(7-(ext_add[0]%8))*8+1;
+			Image_line[i*6+0+3]=Image_line[i*6+0+6]=0;
+			Image_line[i*6+1+3]=Image_line[i*6+1+6]=0;
+			Image_line[i*6+2+3]=Image_line[i*6+2+6]=0;
 		}
-		if(ext_add[1]/8*5+2==row){
-			i=(7-(ext_add[1]%8))*5+2;
-			Image_line[i*9]=Image_line[i*9+3]=Image_line[i*9+6]=0xff;
-			Image_line[i*9+1]=Image_line[i*9+1+3]=Image_line[i*9+1+6]=0xff;
-			Image_line[i*9+2]=Image_line[i*9+2+3]=Image_line[i*9+2+6]=0xff;
+		if(ext_add[1]/8*8+1==row){
+			i=(7-(ext_add[1]%8))*8+1;
+			Image_line[i*6+0+3]=Image_line[i*6+0+6]=0xff;
+			Image_line[i*6+1+3]=Image_line[i*6+1+6]=0xff;
+			Image_line[i*6+2+3]=Image_line[i*6+2+6]=0xff;
 		}
 	}
 }	
@@ -408,11 +415,10 @@ u8 save_bmp(void){
 	
 // 	FAT_SAVABuff(name_buf,(u8*)Image_head,54);
 	
-
 	for(i=0;i<120;i++){
-		if(i%3==0){
-		  get_bmp_line(i/3);
-		}
+		if(i==0)get_bmp_line(0);
+ 		else if(i==119)get_bmp_line(58);
+		else if(i%2==1)get_bmp_line(i/2);
 		if(test_mod==midd && i>34 && i<57){
 			box_mid();
 			if(i>36 && i<55)
@@ -484,9 +490,9 @@ u8 save_bmp(void){
 	
 	//54414byte
 	/*-------save data-------*/
-	for(i=0;i<40;i++){
-		f_write(&fdst_f, data[i], 40*4, &bw_f);
-		File_Byte+=40*4;
+	for(i=0;i<59;i++){
+		f_write(&fdst_f, data[i], 59*4, &bw_f);
+		File_Byte+=59*4;
 		f_lseek(&fdst_f,File_Byte);
 	}
 	
@@ -582,7 +588,7 @@ void GetFileNum(void){
 // 	f_mount(&fs,NULL,1); 
 // }
 
-extern long data[40][40];
+extern long data[59][59];
 
 
 // u8 get_data_bmp(u32 file_name){
@@ -735,11 +741,10 @@ u16 read_saved(u16 num,u8 flag){
 				if(f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ )==FR_OK){
 					f_read(&fdst_f, read_buf, 54, &bw_f);
 					if(check_str(read_buf,Image_head,54) == 0){
-						if(fdst_f.fsize == 60830){  //check new
+						if(fdst_f.fsize == 68354){  //check new
 							filesw = 2;
 							break;
-						}
-						if(fdst_f.fsize == 54414){  //check new
+						}else if(fdst_f.fsize >= 54414){  //check new
 							filesw = 1;
 							break;
 						}
@@ -757,11 +762,10 @@ u16 read_saved(u16 num,u8 flag){
 					if(f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ )==FR_OK){
 						f_read(&fdst_f, read_buf, 54, &bw_f);
 						if(check_str(read_buf,Image_head,54) == 0){
-							if(fdst_f.fsize == 60830){  //check new
+							if(fdst_f.fsize == 68354){  //check new
 								filesw = 2;
 								break;
-							}
-							if(fdst_f.fsize == 54414){  //check new
+							}else if(fdst_f.fsize >= 54414){  //check new
 								filesw = 1;
 								break;
 							}
@@ -786,11 +790,10 @@ u16 read_saved(u16 num,u8 flag){
 				if(f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ )==FR_OK){
 					f_read(&fdst_f, read_buf, 54, &bw_f);
 					if(check_str(read_buf,Image_head,54) == 0){
-						if(fdst_f.fsize == 60830){  //check new
+						if(fdst_f.fsize == 68354){  //check new
 							filesw = 2;
 							break;
-						}
-						if(fdst_f.fsize == 54414){  //check new
+						}else if(fdst_f.fsize >= 54414){  //check new
 							filesw = 1;
 							break;
 						}
@@ -808,11 +811,10 @@ u16 read_saved(u16 num,u8 flag){
 					if(f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ )==FR_OK){
 						f_read(&fdst_f, read_buf, 54, &bw_f);
 						if(check_str(read_buf,Image_head,54) == 0){
-							if(fdst_f.fsize == 60830){  //check new
+							if(fdst_f.fsize == 68354){  //check new
 								filesw = 2;
 								break;
-							}
-							if(fdst_f.fsize == 54414){  //check new
+							}else if(fdst_f.fsize >= 54414){  //check new
 								filesw = 1;
 								break;
 							}
@@ -842,8 +844,8 @@ u16 read_saved(u16 num,u8 flag){
 			LCD_Pic2(123-i,40,120,read_buf);
 		}
 		
-		for(i=0;i<40;i++){
-			for(j=0;j<40;j++){
+		for(i=0;i<59;i++){
+			for(j=0;j<59;j++){
 				data[i][j] = 0xffff;
 			}
 		}
@@ -895,9 +897,9 @@ u16 read_saved(u16 num,u8 flag){
 		File_Byte = 54414;
 		f_lseek(&fdst_f,File_Byte);  //¸Ä±äÖ¸Õë
 		
-		for(i=0;i<40;i++){
-			f_read(&fdst_f, data[i], 40*4, &bw_f);
-			File_Byte+=40*4;
+		for(i=0;i<59;i++){
+			f_read(&fdst_f, data[i], 59*4, &bw_f);
+			File_Byte+=59*4;
 			f_lseek(&fdst_f,File_Byte);
 		}
 		

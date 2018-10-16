@@ -162,7 +162,7 @@ u8 Init_AMG8833(void){
 
 
 
-extern long data[40][40];
+extern long data[59][59];
 extern long ext[3];
 extern u8 ext_add[2];
 
@@ -204,7 +204,8 @@ u8 get_data(void) {
 			ext[1]=buf;
 			ext_add[1]=i;
 		}
-		data[39-(i / 8 * 5 + 2)][i * 5 % 40 + 2] = buf;
+// 		data[39-(i / 8 * 5 + 2)][i * 5 % 40 + 2] = buf;
+		data[58-(i / 8 * 8 + 1)][i % 8 * 8 + 1] = buf;
 	}
 	buf=IIC_Read_Byte(1)&0xff;
 	buf|=(0xff&IIC_Read_Byte(0))<<8;
@@ -225,7 +226,8 @@ u8 get_data(void) {
 		ext[1]=buf;
 		ext_add[1]=i;
 	}
-	data[39-(i / 8 * 5 + 2)][i * 5 % 40 + 2] = buf;
+// 	data[39-(i / 8 * 5 + 2)][i * 5 % 40 + 2] = buf;
+	data[58-(i / 8 * 8 + 1)][i % 8 * 8 + 1] = buf;
 	IIC_Stop();
 	
 	if(USART_RX_BUF!=0)send_once();

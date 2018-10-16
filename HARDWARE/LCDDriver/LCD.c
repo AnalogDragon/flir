@@ -24,7 +24,7 @@
  u8 color_mod=Iron;
  u8 test_mod=none;
 
-extern long data[40][40];
+extern long data[59][59];
 extern long ext[3];
 extern u8 ext_add[2];
 
@@ -579,41 +579,59 @@ void Draw_battery(u8 num){
 void blowup(void) {
 	int i;
 	for (i = 0; i < 8 * 7; i++) {
-		data[i / 7 * 5 + 2][i % 7 * 5 + 2 + 1] = 1+ data[i / 7 * 5 + 2][i % 7 * 5 + 2] * t4 + data[i / 7 * 5 + 2][i % 7 * 5 + 2 + 5] * t1;
-		data[i / 7 * 5 + 2][i % 7 * 5 + 2 + 2] = 1+ data[i / 7 * 5 + 2][i % 7 * 5 + 2] * t3 + data[i / 7 * 5 + 2][i % 7 * 5 + 2 + 5] * t2;
-		data[i / 7 * 5 + 2][i % 7 * 5 + 2 + 3] = 1+ data[i / 7 * 5 + 2][i % 7 * 5 + 2] * t2 + data[i / 7 * 5 + 2][i % 7 * 5 + 2 + 5] * t3;
-		data[i / 7 * 5 + 2][i % 7 * 5 + 2 + 4] = 1+ data[i / 7 * 5 + 2][i % 7 * 5 + 2] * t1 + data[i / 7 * 5 + 2][i % 7 * 5 + 2 + 5] * t4;
+		data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 1] = 1+ data[i / 7 * 8 + 1][i % 7 * 8 + 1] * t7 + data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 8] * t1;
+		data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 2] = 1+ data[i / 7 * 8 + 1][i % 7 * 8 + 1] * t6 + data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 8] * t2;
+		data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 3] = 1+ data[i / 7 * 8 + 1][i % 7 * 8 + 1] * t5 + data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 8] * t3;
+		data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 4] = 1+ data[i / 7 * 8 + 1][i % 7 * 8 + 1] * t4 + data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 8] * t4;
+		data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 5] = 1+ data[i / 7 * 8 + 1][i % 7 * 8 + 1] * t3 + data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 8] * t5;
+		data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 6] = 1+ data[i / 7 * 8 + 1][i % 7 * 8 + 1] * t2 + data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 8] * t6;
+		data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 7] = 1+ data[i / 7 * 8 + 1][i % 7 * 8 + 1] * t1 + data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 8] * t7;
 	}
-	for (i = 0; i < 7 * 36; i++) {
-		data[i % 7 * 5 + 2 + 1][i / 7 + 2] = 1+ data[i % 7 * 5 + 2][i / 7 + 2] * t4 + data[i % 7 * 5 + 2 + 5][i / 7 + 2] * t1;
-		data[i % 7 * 5 + 2 + 2][i / 7 + 2] = 1+ data[i % 7 * 5 + 2][i / 7 + 2] * t3 + data[i % 7 * 5 + 2 + 5][i / 7 + 2] * t2;
-		data[i % 7 * 5 + 2 + 3][i / 7 + 2] = 1+ data[i % 7 * 5 + 2][i / 7 + 2] * t2 + data[i % 7 * 5 + 2 + 5][i / 7 + 2] * t3;
-		data[i % 7 * 5 + 2 + 4][i / 7 + 2] = 1+ data[i % 7 * 5 + 2][i / 7 + 2] * t1 + data[i % 7 * 5 + 2 + 5][i / 7 + 2] * t4;
+	for (i = 0; i < 7 * 57; i++) {
+		data[i % 7 * 8 + 1 + 1][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t7 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t1;
+		data[i % 7 * 8 + 1 + 2][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t6 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t2;
+		data[i % 7 * 8 + 1 + 3][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t5 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t3;
+		data[i % 7 * 8 + 1 + 4][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t4 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t4;
+		data[i % 7 * 8 + 1 + 5][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t3 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t5;
+		data[i % 7 * 8 + 1 + 6][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t2 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t6;
+		data[i % 7 * 8 + 1 + 7][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t1 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t7;
 	}
-	for (i = 0; i < 36; i++) {
-		data[0][i + 2] = data[1][i + 2] = data[2][i + 2];
-		data[39][i + 2] = data[38][i + 2] = data[37][i + 2];
+	for (i = 0; i < 57; i++) {
+		data[0][i + 1] = data[1][i + 1];
+		data[58][i + 1] = data[57][i + 1];
 	}
-	for (i = 0; i < 40; i++) {
-		data[i][0] = data[i][1] = data[i][2];
-		data[i][39] = data[i][38] = data[i][37];
+	for (i = 0; i < 59; i++) {
+		data[i][0] = data[i][1];
+		data[i][58] = data[i][57];
 	}
-	ext[2]=data[19][19];
+	ext[2]=data[29][29];
 }
 
 void get_img(void){
 	u16 i;
 	long diff=ext[0]-ext[1]+2;
-	for(i=0;i<40*40;i++){
-		data[i/40][i%40]=To_HSB(0xff&((data[i/40][i%40]-ext[1]+1)*0xff/diff));
+	if(diff<16){
+		diff = 16;
+	}
+	for(i=0;i<59*59;i++){
+		data[i/59][i%59]=To_HSB(0xff&((data[i/59][i%59]-ext[1]+1)*0xff/diff));
 	}
 }
 
 void Draw_img(void){
 	u16 i;
-	//BlockWrite(4,123,40,159);
-	for (i = 0; i < 40*40; i++){
-		Lcd_ColorBox(4+i/40*3,40+i%40*3,3,3,data[i/40][i%40]);
+	for (i = 0; i < 59; i++){
+		Lcd_ColorBox(5+i*2,40,2,1,data[i][0]);
+		Lcd_ColorBox(5+i*2,159,2,1,data[i][58]);
+		Lcd_ColorBox(4,41+i*2,1,2,data[0][i]);
+		Lcd_ColorBox(123,41+i*2,1,2,data[58][i]);
+	}
+	Lcd_ColorBox(4,40,1,1,data[0][0]);
+	Lcd_ColorBox(4,159,1,1,data[0][58]);
+	Lcd_ColorBox(123,40,1,1,data[58][0]);
+	Lcd_ColorBox(123,159,1,1,data[58][58]);
+	for (i = 0; i < 59*59; i++){
+		Lcd_ColorBox(5+i/59*2,41+i%59*2,2,2,data[i/59][i%59]);
 	}
 }
 
@@ -753,13 +771,13 @@ void Draw_data(void){
 	int min=(int)(ext[1])*10/4;
 	int mid=(int)(ext[2])*10/4;
 	if(test_mod==midd){            //mid
-		Lcd_ColorBox(61,100,3,3,Black);
+		Lcd_ColorBox(61,99,2,2,Black);
 		Lcd_ColorBox(66,82,24,35,White);
 		
   	Draw_Num(69,84,1,mid);
 	}else if(test_mod==exts){
-		Lcd_ColorBox(10+(7-ext_add[0]/8)*15,46+(ext_add[0]%8)*15,3,3,Black);
-		Lcd_ColorBox(10+(7-ext_add[1]/8)*15,46+(ext_add[1]%8)*15,3,3,White);
+		Lcd_ColorBox(7+(7-ext_add[0]/8)*16,43+(ext_add[0]%8)*16,2,2,Black);
+		Lcd_ColorBox(7+(7-ext_add[1]/8)*16,43+(ext_add[1]%8)*16,2,2,White);
 	}
 	Draw_Num(0,0,0,max);
 	Draw_Num(110,0,0,min);
@@ -800,7 +818,7 @@ void Draw_Warning(void){
 void disp_fast(void){    //快速刷新
 	get_data();    //获取数据
 	blowup();      //插值
-	get_img();      //插值转换为rgb图片
+	get_img();      //转换为rgb图片
 	Draw_img();       //显示图片
 	Draw_data();       //显示数据
 	logo_move();       //运行指示

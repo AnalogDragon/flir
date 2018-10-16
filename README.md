@@ -9,6 +9,9 @@
 **0x04** --> 按照提示输入，使用Ymodem格式发送主程序的.bin文件。
 
 
+*這裏是插值8x的工程（master為5x），實際體驗并沒有什麽卵用
+
+
 ![flir](https://github.com/AnalogDragon/flir/blob/master/1.jpg)
 
 ![flir](https://github.com/AnalogDragon/flir/blob/master/readme.png)

@@ -67,7 +67,7 @@ void USART1_IRQHandler(void){
 	}
 }
 
-extern long data[40][40];
+extern long data[59][59];
 
 
 void send_once(void){
@@ -81,11 +81,11 @@ void send_once(void){
 	USART_SendData(USART1,65);//向串口1发送数据
 	for(i=0;i<64;i++){
 		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//等待发送结束
-		USART_SendData(USART1,data[i / 8 * 5 + 2][i * 5 % 40 + 2]&0xff);//向串口1发送数据
-		num+=data[i / 8 * 5 + 2][i * 5 % 40 + 2]&0xff;
+		USART_SendData(USART1,data[i / 8 * 8 + 1][i % 8 * 8 + 1]&0xff);//向串口1发送数据
+		num+=data[i / 8 * 8 + 1][i % 8 * 8 + 1]&0xff;
 		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//等待发送结束
-		USART_SendData(USART1,(data[i / 8 * 5 + 2][i * 5 % 40 + 2]>>8)&0xff);//向串口1发送数据
-		num+=(data[i / 8 * 5 + 2][i * 5 % 40 + 2]>>8)&0xff;
+		USART_SendData(USART1,(data[i / 8 * 8 + 1][i % 8 * 8 + 1]>>8)&0xff);//向串口1发送数据
+		num+=(data[i / 8 * 8 + 1][i % 8 * 8 + 1]>>8)&0xff;
 	}
 	while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//等待发送结束
 	USART_SendData(USART1,num&0xff);//向串口1发送数据
