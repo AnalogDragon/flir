@@ -11,8 +11,7 @@
 
 #define APP_ADDR  0x08004000
 
-
-long data[40][40]={0};
+long data[PixLg][PixLg]={0};
 long ext[3]={0,0,0};
 u8 ext_add[2]={0,0};
 u16 RDFlag;
@@ -184,10 +183,18 @@ int main(void){
 		key_do();
 		disp_slow();
 		disp_fast();
+#ifdef SIZEx5
 		if(USART_RX_BUF==0)delay_ms(60);	//´®¿Ú12ms
 		else delay_ms(48);
 		if(color_mod==RB)delay_ms(5);
 		if(color_mod==BW)delay_ms(6);
+#endif
+#ifdef SIZEx8
+		if(USART_RX_BUF==0)delay_ms(32);	//´®¿Ú12ms
+		else delay_ms(20);
+		if(color_mod==RB)delay_ms(10);
+		if(color_mod==BW)delay_ms(15);
+#endif
 	}
 }
 

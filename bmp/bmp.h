@@ -17,9 +17,11 @@
 #define midd 1
 #define exts 2
 
+
 // static FRESULT FAT_SAVABuff( char *path , u8 *DataBuff ,u16 DataLength );
 //static FRESULT FAT_SAVABuff1( char *path ,u8 *DataBuff ,u16 DataLength );
-void get_bmp_line(u8 row);
+void get_bmp_line_x5(u8 row);
+void get_bmp_line_x8(u8 row);
 void get_Black_line(void);
 void get_num_line(u8 x,int num,u8 bl,u8 line);
 u8 save_bmp(void);

@@ -1,6 +1,7 @@
 #ifndef __SYS_H
 #define __SYS_H	
 #include "stm32f10x.h"
+#include "VarDefine.h"
 
 //0,不支持ucos
 //1,支持ucos

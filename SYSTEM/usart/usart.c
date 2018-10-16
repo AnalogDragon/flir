@@ -67,7 +67,7 @@ void USART1_IRQHandler(void){
 	}
 }
 
-extern long data[40][40];
+extern long data[PixLg][PixLg];
 
 
 void send_once(void){

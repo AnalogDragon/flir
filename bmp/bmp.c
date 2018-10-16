@@ -15,7 +15,7 @@
 FATFS fs;
 DIR dr;
 
-extern long data[40][40];
+extern long data[PixLg][PixLg];
 extern long ext[3];
 extern u8 ext_add[2];
 extern u8 test_mod;
@@ -51,7 +51,8 @@ static FRESULT FAT_SAVABuff1( char *path ,u8 *DataBuff ,u16 DataLength ){
 	return res_f;
 }
 */
-void get_bmp_line(u8 row){
+#ifdef SIZEx5
+void get_bmp_line_x5(u8 row){
 	u8 i;
 	for(i=0;i<40;i++){
 		Image_line[i*9]=Image_line[i*9+3]=Image_line[i*9+6]=(u8)((((data[39-row][39-i]>>0)&0xff)<<3)&0xff);
@@ -79,6 +80,46 @@ void get_bmp_line(u8 row){
 		}
 	}
 }	
+#endif
+
+#ifdef SIZEx8
+void get_bmp_line_x8(u8 row){
+	u8 i;
+	for(i=0;i<59;i++){
+		Image_line[i*6+0+3]=Image_line[i*6+0+6]=(u8)((((data[58-row][58-i]>>0)&0xff)<<3)&0xff);
+		Image_line[i*6+1+3]=Image_line[i*6+1+6]=(u8)((((data[58-row][58-i]>>6)&0xff)<<3)&0xff);
+		Image_line[i*6+2+3]=Image_line[i*6+2+6]=(u8)((((data[58-row][58-i]>>11)&0xff)<<3)&0xff);
+	}
+	Image_line[0]=(u8)((((data[58-row][58-0]>>0)&0xff)<<3)&0xff);
+	Image_line[1]=(u8)((((data[58-row][58-0]>>6)&0xff)<<3)&0xff);
+	Image_line[2]=(u8)((((data[58-row][58-0]>>11)&0xff)<<3)&0xff);
+	Image_line[357]=(u8)((((data[58-row][58-58]>>0)&0xff)<<3)&0xff);
+	Image_line[358]=(u8)((((data[58-row][58-58]>>6)&0xff)<<3)&0xff);
+	Image_line[359]=(u8)((((data[58-row][58-58]>>11)&0xff)<<3)&0xff);
+	
+	if(test_mod==midd){
+		if(row==29){
+			Image_line[29*6+0+3]=Image_line[29*6+0+6]=0;
+			Image_line[29*6+1+3]=Image_line[29*6+1+6]=0;
+			Image_line[29*6+2+3]=Image_line[29*6+2+6]=0;
+		}
+	}else if(test_mod==exts){
+		if(ext_add[0]/8*8+1==row){
+			i=(7-(ext_add[0]%8))*8+1;
+			Image_line[i*6+0+3]=Image_line[i*6+0+6]=0;
+			Image_line[i*6+1+3]=Image_line[i*6+1+6]=0;
+			Image_line[i*6+2+3]=Image_line[i*6+2+6]=0;
+		}
+		if(ext_add[1]/8*8+1==row){
+			i=(7-(ext_add[1]%8))*8+1;
+			Image_line[i*6+0+3]=Image_line[i*6+0+6]=0xff;
+			Image_line[i*6+1+3]=Image_line[i*6+1+6]=0xff;
+			Image_line[i*6+2+3]=Image_line[i*6+2+6]=0xff;
+		}
+	}
+}	
+#endif
+
 
 void get_Black_line(void){
 	u8 i;
@@ -408,11 +449,20 @@ u8 save_bmp(void){
 	
 // 	FAT_SAVABuff(name_buf,(u8*)Image_head,54);
 	
-
 	for(i=0;i<120;i++){
+		
+#ifdef SIZEx5				//5x插值換算
 		if(i%3==0){
-		  get_bmp_line(i/3);
+		  get_bmp_line_x5(i/3);
 		}
+#endif
+		
+#ifdef SIZEx8
+		if(i==0)get_bmp_line_x8(0);
+ 		else if(i==119)get_bmp_line_x8(58);
+		else if(i%2==1)get_bmp_line_x8(i/2);
+#endif
+		
 		if(test_mod==midd && i>34 && i<57){
 			box_mid();
 			if(i>36 && i<55)
@@ -424,6 +474,7 @@ u8 save_bmp(void){
 		f_lseek(&fdst_f,File_Byte);
 		
 	}
+	
 	if(color_mod==Iron){
 		for(i=0;i<8;i++){
 // 			FAT_SAVABuff(name_buf,(u8*)Image_line_Iron,360);
@@ -484,9 +535,9 @@ u8 save_bmp(void){
 	
 	//54414byte
 	/*-------save data-------*/
-	for(i=0;i<40;i++){
-		f_write(&fdst_f, data[i], 40*4, &bw_f);
-		File_Byte+=40*4;
+	for(i=0;i<PixLg;i++){
+		f_write(&fdst_f, data[i], PixLg*4, &bw_f);
+		File_Byte+=PixLg*4;
 		f_lseek(&fdst_f,File_Byte);
 	}
 	
@@ -582,7 +633,7 @@ void GetFileNum(void){
 // 	f_mount(&fs,NULL,1); 
 // }
 
-extern long data[40][40];
+extern long data[PixLg][PixLg];
 
 
 // u8 get_data_bmp(u32 file_name){
@@ -605,7 +656,7 @@ extern long data[40][40];
 // }
 
 
-u8 Play_BadApple(void){
+u8 Play_BadApple(void){   //40*40
 	u16 i=1,j,l;	
 	FIL fdst_f;
 	FRESULT res_f;
@@ -623,11 +674,11 @@ u8 Play_BadApple(void){
 	ext[1]=0;
 	do{
 		for(j=0;j<40;j++){
-			f_lseek(&fdst_f,(i*1600+j*40));
+			f_lseek(&fdst_f,(i*40*40+j*40));
 			res_f = f_read(&fdst_f, buf, 40, &bw_f);
 			for(l=0;l<20;l++){
-				data[39-j][39-l*2-1]=0xff&(buf[l]>>8);
-				data[39-j][39-l*2]=0xff&buf[l];
+				data[(40-1)-j][(40-1)-l*2-1]=0xff&(buf[l]>>8);
+				data[(40-1)-j][(40-1)-l*2]=0xff&buf[l];
 			}
 		}
 		get_img();      //插值转换为rgb图片
@@ -735,11 +786,10 @@ u16 read_saved(u16 num,u8 flag){
 				if(f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ )==FR_OK){
 					f_read(&fdst_f, read_buf, 54, &bw_f);
 					if(check_str(read_buf,Image_head,54) == 0){
-						if(fdst_f.fsize == 60830){  //check new
+						if(fdst_f.fsize == FileNow){  //check new
 							filesw = 2;
 							break;
-						}
-						if(fdst_f.fsize == 54414){  //check new
+						}else if(fdst_f.fsize >= FileBase){  //check new
 							filesw = 1;
 							break;
 						}
@@ -757,11 +807,10 @@ u16 read_saved(u16 num,u8 flag){
 					if(f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ )==FR_OK){
 						f_read(&fdst_f, read_buf, 54, &bw_f);
 						if(check_str(read_buf,Image_head,54) == 0){
-							if(fdst_f.fsize == 60830){  //check new
+							if(fdst_f.fsize == FileNow){  //check new
 								filesw = 2;
 								break;
-							}
-							if(fdst_f.fsize == 54414){  //check new
+							}else if(fdst_f.fsize >= FileBase){  //check new
 								filesw = 1;
 								break;
 							}
@@ -786,11 +835,10 @@ u16 read_saved(u16 num,u8 flag){
 				if(f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ )==FR_OK){
 					f_read(&fdst_f, read_buf, 54, &bw_f);
 					if(check_str(read_buf,Image_head,54) == 0){
-						if(fdst_f.fsize == 60830){  //check new
+						if(fdst_f.fsize == FileNow){  //check new
 							filesw = 2;
 							break;
-						}
-						if(fdst_f.fsize == 54414){  //check new
+						}else if(fdst_f.fsize >= FileBase){  //check new
 							filesw = 1;
 							break;
 						}
@@ -808,11 +856,10 @@ u16 read_saved(u16 num,u8 flag){
 					if(f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ )==FR_OK){
 						f_read(&fdst_f, read_buf, 54, &bw_f);
 						if(check_str(read_buf,Image_head,54) == 0){
-							if(fdst_f.fsize == 60830){  //check new
+							if(fdst_f.fsize == FileNow){  //check new
 								filesw = 2;
 								break;
-							}
-							if(fdst_f.fsize == 54414){  //check new
+							}else if(fdst_f.fsize >= FileBase){  //check new
 								filesw = 1;
 								break;
 							}
@@ -842,8 +889,8 @@ u16 read_saved(u16 num,u8 flag){
 			LCD_Pic2(123-i,40,120,read_buf);
 		}
 		
-		for(i=0;i<40;i++){
-			for(j=0;j<40;j++){
+		for(i=0;i<PixLg;i++){
+			for(j=0;j<PixLg;j++){
 				data[i][j] = 0xffff;
 			}
 		}
@@ -890,14 +937,14 @@ u16 read_saved(u16 num,u8 flag){
 		f_closedir(&dr);
 		f_mount(&fs,NULL,1); 
 		
-	}else if(filesw == 2){	
+	}else if(filesw == 2){	///////////////////////////////////////////////////
 		
-		File_Byte = 54414;
+		File_Byte = FileBase;
 		f_lseek(&fdst_f,File_Byte);  //改变指针
 		
-		for(i=0;i<40;i++){
-			f_read(&fdst_f, data[i], 40*4, &bw_f);
-			File_Byte+=40*4;
+		for(i=0;i<PixLg;i++){
+			f_read(&fdst_f, data[i], PixLg*4, &bw_f);
+			File_Byte+=PixLg*4;
 			f_lseek(&fdst_f,File_Byte);
 		}
 		

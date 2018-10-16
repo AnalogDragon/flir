@@ -24,7 +24,7 @@
  u8 color_mod=Iron;
  u8 test_mod=none;
 
-extern long data[40][40];
+extern long data[PixLg][PixLg];
 extern long ext[3];
 extern u8 ext_add[2];
 
@@ -575,6 +575,23 @@ void Draw_battery(u8 num){
 	}
 }
 
+void get_img(void){
+	u16 i;
+	long diff=ext[0]-ext[1]+2;
+	if(diff<16)diff = 16;
+	for(i=0;i<PixLg*PixLg;i++){
+		data[i/PixLg][i%PixLg]=To_HSB(0xff&((data[i/PixLg][i%PixLg]-ext[1]+1)*0xff/diff));
+	}
+}
+
+#ifdef SIZEx5
+void Draw_img(void){
+	u16 i;
+	//BlockWrite(4,123,40,159);
+	for (i = 0; i < PixLg*PixLg; i++){
+		Lcd_ColorBox(4+i/PixLg*3,PixLg+i%PixLg*3,3,3,data[i/PixLg][i%PixLg]);
+	}
+}
 
 void blowup(void) {
 	int i;
@@ -600,22 +617,57 @@ void blowup(void) {
 	}
 	ext[2]=data[19][19];
 }
+#endif
 
-void get_img(void){
-	u16 i;
-	long diff=ext[0]-ext[1]+2;
-	for(i=0;i<40*40;i++){
-		data[i/40][i%40]=To_HSB(0xff&((data[i/40][i%40]-ext[1]+1)*0xff/diff));
-	}
-}
-
+#ifdef SIZEx8
 void Draw_img(void){
 	u16 i;
-	//BlockWrite(4,123,40,159);
-	for (i = 0; i < 40*40; i++){
-		Lcd_ColorBox(4+i/40*3,40+i%40*3,3,3,data[i/40][i%40]);
+	for (i = 0; i < PixLg; i++){
+		Lcd_ColorBox(5+i*2,40,2,1,data[i][0]);
+		Lcd_ColorBox(5+i*2,159,2,1,data[i][PixLg-1]);
+		Lcd_ColorBox(4,41+i*2,1,2,data[0][i]);
+		Lcd_ColorBox(123,41+i*2,1,2,data[PixLg-1][i]);
+	}
+	Lcd_ColorBox(4,40,1,1,data[0][0]);
+	Lcd_ColorBox(4,159,1,1,data[0][PixLg-1]);
+	Lcd_ColorBox(123,40,1,1,data[PixLg-1][0]);
+	Lcd_ColorBox(123,159,1,1,data[PixLg-1][PixLg-1]);
+	for (i = 0; i < PixLg*PixLg; i++){
+		Lcd_ColorBox(5+i/PixLg*2,41+i%PixLg*2,2,2,data[i/PixLg][i%PixLg]);
 	}
 }
+
+void blowup(void) {
+	int i;
+	for (i = 0; i < 8 * 7; i++) {
+		data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 1] = 1+ data[i / 7 * 8 + 1][i % 7 * 8 + 1] * t7 + data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 8] * t1;
+		data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 2] = 1+ data[i / 7 * 8 + 1][i % 7 * 8 + 1] * t6 + data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 8] * t2;
+		data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 3] = 1+ data[i / 7 * 8 + 1][i % 7 * 8 + 1] * t5 + data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 8] * t3;
+		data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 4] = 1+ data[i / 7 * 8 + 1][i % 7 * 8 + 1] * t4 + data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 8] * t4;
+		data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 5] = 1+ data[i / 7 * 8 + 1][i % 7 * 8 + 1] * t3 + data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 8] * t5;
+		data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 6] = 1+ data[i / 7 * 8 + 1][i % 7 * 8 + 1] * t2 + data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 8] * t6;
+		data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 7] = 1+ data[i / 7 * 8 + 1][i % 7 * 8 + 1] * t1 + data[i / 7 * 8 + 1][i % 7 * 8 + 1 + 8] * t7;
+	}
+	for (i = 0; i < 7 * 57; i++) {
+		data[i % 7 * 8 + 1 + 1][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t7 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t1;
+		data[i % 7 * 8 + 1 + 2][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t6 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t2;
+		data[i % 7 * 8 + 1 + 3][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t5 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t3;
+		data[i % 7 * 8 + 1 + 4][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t4 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t4;
+		data[i % 7 * 8 + 1 + 5][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t3 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t5;
+		data[i % 7 * 8 + 1 + 6][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t2 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t6;
+		data[i % 7 * 8 + 1 + 7][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t1 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t7;
+	}
+	for (i = 0; i < 57; i++) {
+		data[0][i + 1] = data[1][i + 1];
+		data[58][i + 1] = data[57][i + 1];
+	}
+	for (i = 0; i < 59; i++) {
+		data[i][0] = data[i][1];
+		data[i][58] = data[i][57];
+	}
+	ext[2]=data[29][29];
+}
+#endif
 
 void Draw_A_num(u16 x, u16 y,u8 size,u8 back,u8 num){
   u16 i;
@@ -752,15 +804,30 @@ void Draw_data(void){
 	int max=(int)(ext[0])*10/4;
 	int min=(int)(ext[1])*10/4;
 	int mid=(int)(ext[2])*10/4;
+	
+#ifdef SIZEx5
 	if(test_mod==midd){            //mid
 		Lcd_ColorBox(61,100,3,3,Black);
 		Lcd_ColorBox(66,82,24,35,White);
-		
   	Draw_Num(69,84,1,mid);
 	}else if(test_mod==exts){
 		Lcd_ColorBox(10+(7-ext_add[0]/8)*15,46+(ext_add[0]%8)*15,3,3,Black);
 		Lcd_ColorBox(10+(7-ext_add[1]/8)*15,46+(ext_add[1]%8)*15,3,3,White);
 	}
+#endif
+	
+#ifdef SIZEx8
+	if(test_mod==midd){            //mid
+		Lcd_ColorBox(61,99,2,2,Black);
+		Lcd_ColorBox(66,82,24,35,White);
+		
+  	Draw_Num(69,84,1,mid);
+	}else if(test_mod==exts){
+		Lcd_ColorBox(7+(7-ext_add[0]/8)*16,43+(ext_add[0]%8)*16,2,2,Black);
+		Lcd_ColorBox(7+(7-ext_add[1]/8)*16,43+(ext_add[1]%8)*16,2,2,White);
+	}
+#endif
+	
 	Draw_Num(0,0,0,max);
 	Draw_Num(110,0,0,min);
 }

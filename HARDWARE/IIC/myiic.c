@@ -159,16 +159,22 @@ u8 Init_AMG8833(void){
 }
 
 
-
-
-
-extern long data[40][40];
+extern long data[PixLg][PixLg];
 extern long ext[3];
 extern u8 ext_add[2];
 
-
-
 u16 test_table[8][8];
+
+
+void data_push(u8 addr,u16 dat){
+#ifdef SIZEx5
+	data[PixLg-1-(addr / 8 * PixGain + 2)][addr % 8 * PixGain + 2] = dat;
+#endif
+	
+#ifdef SIZEx8
+	data[PixLg-1-(addr / 8 * PixGain + 1)][addr % 8 * PixGain + 1] = dat;
+#endif
+}
 
 
 u8 get_data(void) {
@@ -204,7 +210,7 @@ u8 get_data(void) {
 			ext[1]=buf;
 			ext_add[1]=i;
 		}
-		data[39-(i / 8 * 5 + 2)][i * 5 % 40 + 2] = buf;
+		data_push(i,buf);
 	}
 	buf=IIC_Read_Byte(1)&0xff;
 	buf|=(0xff&IIC_Read_Byte(0))<<8;
@@ -225,7 +231,7 @@ u8 get_data(void) {
 		ext[1]=buf;
 		ext_add[1]=i;
 	}
-	data[39-(i / 8 * 5 + 2)][i * 5 % 40 + 2] = buf;
+	data_push(i,buf);
 	IIC_Stop();
 	
 	if(USART_RX_BUF!=0)send_once();
