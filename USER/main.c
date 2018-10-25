@@ -27,6 +27,7 @@ void key_do(void){
 	u8 j=0x20;
 	u8 buf=0;
 	u8 PlayFlag = 0;
+	u8 color_mod_buf = color_mod;
 	RDFlag = 0;
 	if(key==1){                     //更换色彩卡
 		switch (color_mod){ 
@@ -35,6 +36,7 @@ void key_do(void){
 			case RB:color_mod=BW;break;
 			default:color_mod=Iron;break;
 		}
+		color_mod_buf = color_mod;
 	}
 	if(key==2){               //更换测温点模式
 		switch (test_mod){
@@ -64,6 +66,7 @@ void key_do(void){
 			key=KEY_Scan(0);
 			if(j==0xE8){
 				j=0;
+				color_mod = color_mod_buf;
 				key=Play_BadApple();
 			}
 			if(key==1){
@@ -129,6 +132,7 @@ void key_do(void){
 		}
 		Draw_Camera();
 	}
+	color_mod = color_mod_buf;
 }
 
 

@@ -656,36 +656,41 @@ extern long data[PixLg][PixLg];
 // }
 
 
-u8 Play_BadApple(void){   //40*40
+
+u8 read_buf[480]={0};
+
+u8 Play_BadApple(void){
 	u16 i=1,j,l;	
 	FIL fdst_f;
 	FRESULT res_f;
 	UINT bw_f; 
   u32 File_Byte;	
-	u16 buf[20];
 	
 	if(f_mount(&fs,"0:",1)!=FR_OK)return 0;
 	if(f_opendir(&dr, "0:/sys")!=FR_OK)return 0;
 	res_f = f_open(&fdst_f, "0:/sys/PlayFile.bin", FA_OPEN_EXISTING | FA_READ  );
 	if( res_f != FR_OK )return 0;
 	File_Byte = fdst_f.fsize;
-  File_Byte/=1600;
+  File_Byte/=PixLg*PixLg;
+	ext[0]=932;
+	ext[1]=932;
+	Draw_data();
 	ext[0]=0xff;
 	ext[1]=0;
 	do{
-		for(j=0;j<40;j++){
-			f_lseek(&fdst_f,(i*40*40+j*40));
-			res_f = f_read(&fdst_f, buf, 40, &bw_f);
-			for(l=0;l<20;l++){
-				data[(40-1)-j][(40-1)-l*2-1]=0xff&(buf[l]>>8);
-				data[(40-1)-j][(40-1)-l*2]=0xff&buf[l];
+		disp_slow();
+		for(j=0;j<PixLg;j++){
+			f_lseek(&fdst_f,(i*PixLg*PixLg+j*PixLg));
+			res_f = f_read(&fdst_f, read_buf, PixLg, &bw_f);
+			for(l=0;l<PixLg;l++){
+				data[(PixLg-1)-j][(PixLg-1)-l]=read_buf[l];
 			}
 		}
 		get_img();      //插值转换为rgb图片
 		Draw_img();       //显示图片
 		logo_move();       //运行指示
 // 		LED0=~LED0;     //刷新率测试
-		delay_ms(64);
+		delay_ms(42);
 		i++;
 	}while(File_Byte>=i && KEY_Scan(0)==0);
 	f_close(&fdst_f); 
@@ -706,9 +711,6 @@ u8 check_str(u8 *str1,const u8 *str2,u16 times){
 	return 0;
 }
 
-
-
-u8 read_buf[480]={0};
 
 u8 read_boot_bmp(void){
 	u16 i,j,buf;	
