@@ -265,7 +265,13 @@ WriteData(0xEE);
 WriteComm(0xC5); //VCOM
 WriteData(0x0D);
 WriteComm(0x36); //MX, MY, RGB mode
-WriteData(0xC8);
+
+#ifdef LcdOldVersion
+WriteData(0xC8);  //<---
+#else
+WriteData(0xC0);  //<---
+#endif
+
 //------------------------------------ST7735S Gamma Sequence-----------------------------------------//
 WriteComm(0xE0);
 WriteData(0x0A);
@@ -370,10 +376,13 @@ void Lcd_WR_Start(void)
 ***********************************************/
 void BlockWrite(unsigned int Xstart,unsigned int Xend,unsigned int Ystart,unsigned int Yend) 
 {
+	
+#ifdef LcdOldVersion
 	Xstart += 2;
 	Xend += 2;
 	Ystart += 1;
 	Yend += 1;
+#endif
 	
 	WriteComm(0x2a);   
 	WriteData(Xstart>>8);

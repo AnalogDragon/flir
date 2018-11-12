@@ -4,8 +4,10 @@
 
 // #define SIZEx5 5
 
-#define SIZEx8 8
+#define SIZEx8 8  //插值数量选择
 
+
+#define LcdOldVersion //新版的屏幕注释掉这一行。
 
 
 #ifdef SIZEx5

@@ -302,10 +302,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>7</ColumnNumber>
+      <ColumnNumber>10</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>65</TopLine>
-      <CurrentLine>71</CurrentLine>
+      <TopLine>69</TopLine>
+      <CurrentLine>72</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\main.c</PathWithFileName>
       <FilenameWithoutPath>main.c</FilenameWithoutPath>
@@ -409,10 +409,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>16</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>795</TopLine>
-      <CurrentLine>803</CurrentLine>
+      <TopLine>364</TopLine>
+      <CurrentLine>380</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\HARDWARE\LCDDriver\LCD.c</PathWithFileName>
       <FilenameWithoutPath>LCD.c</FilenameWithoutPath>
@@ -830,7 +830,7 @@
       <Focus>0</Focus>
       <ColumnNumber>1</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>2544</TopLine>
+      <TopLine>2548</TopLine>
       <CurrentLine>2554</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\FATFS\src\ff.c</PathWithFileName>
