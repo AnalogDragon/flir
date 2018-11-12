@@ -79,15 +79,32 @@ void send_once(void){
 	USART_SendData(USART1,0xAA);//向串口1发送数据
 	while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//等待发送结束
 	USART_SendData(USART1,65);//向串口1发送数据
+	
+#ifdef SIZEx5	
 	for(i=0;i<64;i++){
 		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//等待发送结束
-		USART_SendData(USART1,data[i / 8 * 5 + 2][i * 5 % 40 + 2]&0xff);//向串口1发送数据
-		num+=data[i / 8 * 5 + 2][i * 5 % 40 + 2]&0xff;
+		USART_SendData(USART1,data[(i / 8 * PixGain + 2)][i % 8 * PixGain + 2]&0xff);//向串口1发送数据
+		num+=data[(i / 8 * PixGain + 2)][i % 8 * PixGain + 2]&0xff;
 		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//等待发送结束
-		USART_SendData(USART1,(data[i / 8 * 5 + 2][i * 5 % 40 + 2]>>8)&0xff);//向串口1发送数据
-		num+=(data[i / 8 * 5 + 2][i * 5 % 40 + 2]>>8)&0xff;
+		USART_SendData(USART1,(data[(i / 8 * PixGain + 2)][i % 8 * PixGain + 2]>>8)&0xff);//向串口1发送数据
+		num+=(data[(i / 8 * PixGain + 2)][i % 8 * PixGain + 2]>>8)&0xff;
 	}
+#endif
+	
+#ifdef SIZEx8
+	for(i=0;i<64;i++){
+		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//等待发送结束
+		USART_SendData(USART1,data[(i / 8 * PixGain + 1)][i % 8 * PixGain + 1]&0xff);//向串口1发送数据
+		num+=data[(i / 8 * PixGain + 1)][i % 8 * PixGain + 1]&0xff;
+		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//等待发送结束
+		USART_SendData(USART1,(data[(i / 8 * PixGain + 1)][i % 8 * PixGain + 1]>>8)&0xff);//向串口1发送数据
+		num+=(data[(i / 8 * PixGain + 1)][i % 8 * PixGain + 1]>>8)&0xff;
+	}
+#endif
+	
+
 	while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//等待发送结束
 	USART_SendData(USART1,num&0xff);//向串口1发送数据
+	
 }
 

@@ -12,3 +12,7 @@
 ![flir](https://github.com/AnalogDragon/flir/blob/master/1.jpg)
 
 ![flir](https://github.com/AnalogDragon/flir/blob/master/readme.png)
+
+
+
+开机图片放在0:/sys/BootGrap.bmp 尺寸:160*128
