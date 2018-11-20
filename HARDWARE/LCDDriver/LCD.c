@@ -666,6 +666,9 @@ void blowup(void) {
 		data[i % 7 * 8 + 1 + 6][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t2 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t6;
 		data[i % 7 * 8 + 1 + 7][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t1 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t7;
 	}
+// 	for (i = 0; i < 64; i++) {
+// 		data[PixLg-1-(i / 8 * PixGain + 1)][i % 8 * PixGain + 1] ++;//dat;
+// 	}
 	for (i = 0; i < 57; i++) {
 		data[0][i + 1] = data[1][i + 1];
 		data[58][i + 1] = data[57][i + 1];
