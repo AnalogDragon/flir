@@ -897,19 +897,20 @@ void disp_slow(void){     //慢速刷新+按键操作刷新
 	Draw_color();
 	Draw_Warning();
 	
-// 	if(SysState.DispStep != Normal){
-// 		
-// 		if(SysTime.SysTimeCNT100ms%16>7){			//闪烁图标
-// 			if(SysState.DispStep == Pause)
-// 				Lcd_ColorBox(75,5,9,9,White);
-// 			else if(SysState.DispStep == Play)
-// 				Draw_BackPlay();
-// 		}
-// 		else{
-// 			Lcd_ColorBox(75,5,9,9,Black);
-// 		}
-// 		
-// 	}
+	if(SysState.DispStep != Normal){
+		
+		if(SysTime.SysTimeCNT100ms%16>7){			//闪烁图标
+			if(SysState.DispStep == Pause)
+				Lcd_ColorBox(75,5,9,9,White);
+			else if(SysState.DispStep == Play)
+				Draw_BackPlay();
+		}
+		else{
+			Lcd_ColorBox(75,5,9,9,Black);
+		}
+		
+	}
+	
 }
 
 

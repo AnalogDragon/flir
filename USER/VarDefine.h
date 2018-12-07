@@ -66,15 +66,24 @@ typedef enum DISPMEAS{
 }DISPMEAS;
 
 
+struct SysFlag_BITS{
+	u8 SaveFlag:1;
+	u8 RefreshFlag:1;
+};
+
+union SysFlag_REG {
+   u16                   	all;
+   struct SysFlag_BITS  	bit;
+};
+
 struct SysState_REG{
 	u8 DispStep;
 	u8 ColrMode;
 	u8 ColrModeBak;
 	u8 DispMeas;
-	u8 SaveFlag;
-	u8 RefreshFlag;
 	u16 PlayNum;
 	u16 SaveNum;
+	union SysFlag_REG SysFlag;
 };
 
 extern struct SysState_REG SysState;

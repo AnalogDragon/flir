@@ -22,125 +22,70 @@ struct SysState_REG SysState;
 
 
 void key_do(void){
-	u8 key=KEY_Scan(0);
-	u8 i;
-	u8 j=0x20;
-	u8 buf=0;
-	u8 PlayFlag = 0;
-	SysState.ColrModeBak = SysState.ColrMode;
-	SysState.PlayNum = 0;
-	if(key==1){                     //更换色彩卡
-		switch (SysState.ColrMode){ 
-			case BW:SysState.ColrMode=Iron;break;
-			case Iron:SysState.ColrMode=RB;break;
-			case RB:SysState.ColrMode=BW;break;
-			default:SysState.ColrMode=Iron;break;
-		}
-		SysState.ColrModeBak = SysState.ColrMode;
-	}
-	if(key==2){               //更换测温点模式
-		switch (SysState.DispMeas){
-			case none:SysState.DispMeas=midd;break;
-			case midd:SysState.DispMeas=exts;break;
-			case exts:SysState.DispMeas=none;break;
-			default:SysState.DispMeas=none;break;
-		}
-	}
-	if(key==3){             //暂停画面   
-		Lcd_ColorBox(75,5,9,9,White);
-		delay_ms(10);
-		do{
-			i++;
-			if(i==255){
-				Lcd_ColorBox(75,5,9,9,Black);//闪烁图标
-				j++;
-				j&=0xEF;
-			}
-			if(i==127){
-				if(PlayFlag != 0)
-					Draw_BackPlay();
-				else 
-					Lcd_ColorBox(75,5,9,9,White);
-			}
-			if(i%16 == 0)disp_slow();         ///160ms刷新电量
-			key=KEY_Scan(0);
-			if(j==0xE8){
-				j=0;
-				SysState.ColrMode = SysState.ColrModeBak;
-				key=Play_BadApple();
-			}
-			if(key==1){
-				if((j&0x80)!=0)
-					j=0;
-				j|=0x80;
-				j&=0xF0;
+	
+	
+	switch(KEY_Scan(0)){
+		
+		case 1:
+			if(SysState.DispStep == Normal){
+				switch (SysState.ColrMode){ 
+					case BW:		SysState.ColrMode = Iron;		break;
+					case Iron:	SysState.ColrMode = RB;			break;
+					case RB:		SysState.ColrMode = BW;			break;
+					default:		SysState.ColrMode = Iron;		break;
+				}
+			}else if(SysState.DispStep == Pause){
+				SysState.DispStep = Play;
+				Draw_BackPlay();
 				SysState.PlayNum=read_saved(SysState.PlayNum,0);
-				PlayFlag = 1;
+			}else if(SysState.DispStep == Play){
+				SysState.PlayNum=read_saved(SysState.PlayNum,0);
 			}
-			if(key==2){               //更换测温点模式
-				j=0;
-				switch (SysState.DispMeas){
-					case none:SysState.DispMeas=midd;break;
-					case midd:SysState.DispMeas=exts;break;
-					case exts:SysState.DispMeas=none;break;
-					default:SysState.DispMeas=none;break;
-				}
-				Draw_img();       //显示图片
-				Draw_data();       //显示数据
-				disp_slow();       //<---
+			break;
+		
+		case 2:
+			switch (SysState.DispMeas){
+				case none:	SysState.DispMeas = midd;		break;
+				case midd:	SysState.DispMeas = exts;		break;
+				case exts:	SysState.DispMeas = none;		break;
+				default:		SysState.DispMeas = none;		break;
 			}
-			if(key==4){                 //保存截图
-				if(PlayFlag == 0){
-					Draw_Wait();
-					if(SD_Init()==0){
-						save_bmp();
-					}
-					Draw_Camera();
-				}else{
-					SysState.PlayNum=read_saved(SysState.PlayNum,1);
-					if((j&0x80) == 0x80){
-						if((j&0x40)!=0)
-							j=0;
-						j|=0x40;
-						j&=0xF0;
-					}
-				}
-			}if(key==3){
-				buf=0;
-				while(KEY_Scan(1) == 3){
-					delay_ms(1);
-					buf++;
-					if(buf>50){
-				    key=0;
-						buf=0;
-						TIM3->CCR1-=10;
-						if(TIM3->CCR1 == 0)TIM3->CCR1=100;
-						if(TIM3->CCR1 == 10)break;
-					}
-				}
+			if(SysState.DispStep != Normal)
+				SysState.SysFlag.bit.RefreshFlag = 1;
+			break;
+		
+		case 3:
+			if(SysState.DispStep == Normal){
+				SysState.DispStep = Pause;
+				SysState.ColrModeBak = SysState.ColrMode;
+				SysState.PlayNum = 0;
+				Lcd_ColorBox(75,5,9,9,White);
+			}else{
+				SysState.DispStep = Normal;
+				SysState.ColrMode = SysState.ColrModeBak;
+				SysState.PlayNum = 0;
+				Lcd_ColorBox(75,5,9,9,Black);
 			}
-			delay_ms(5);
-		}while(key==0 || key==1 || key==2 || key==4);
-		Lcd_ColorBox(75,5,9,9,Black);   //消除暂停图标
-		if(AT24CXX_ReadOneByte(0x10) != (TIM3->CCR1/10)) //存储亮度
-			AT24CXX_WriteOneByte(0x10,TIM3->CCR1/10);
+			break;
+		
+		case 4:
+			if(SysState.DispStep == Play){
+				SysState.PlayNum=read_saved(SysState.PlayNum,1);
+			}else{
+				SysState.SysFlag.bit.SaveFlag = 1;
+			}
+			break;
+		
 	}
-	if(key==4){                 //保存截图
-		Draw_Wait();
-		if(SD_Init()==0){
-			save_bmp();
-		}
-		Draw_Camera();
-	}
-	SysState.ColrMode = SysState.ColrModeBak;
+
 }
 
 
 
 void SaveIMG(void){
 	
-	if(SysState.SaveFlag){
-		SysState.SaveFlag = 0;
+	if(SysState.SysFlag.bit.SaveFlag){
+		SysState.SysFlag.bit.SaveFlag = 0;
 		Draw_Wait();
 		if(SD_Init()==0){
 			save_bmp();
@@ -207,12 +152,15 @@ int main(void){
 		
 		if(SysTime.SysTimeFLG10ms){
 			key_do();
+			SaveIMG();
 			SysTime.SysTimeFLG10ms = 0;
 		}
 		
 		if(SysTime.SysTimeFLG100ms){
-			GetImg();
-			disp_fast();
+			if(SysState.DispStep == Normal){
+				GetImg();
+				disp_fast();
+			}
 			disp_slow();
 			SysTime.SysTimeFLG100ms = 0;
 		}
