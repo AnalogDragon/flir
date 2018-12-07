@@ -1,9 +1,8 @@
 #include "delay.h"
 #include "sys.h"
-
+ 
 static u8  fac_us=0;//us延时倍乘数
 static u16 fac_ms=0;//ms延时倍乘数
-
 
 //初始化延迟函数
 //当使用ucos的时候,此函数会初始化ucos的时钟节拍
@@ -12,48 +11,13 @@ static u16 fac_ms=0;//ms延时倍乘数
 void delay_init()	 
 {
 	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK_Div8);	//选择外部时钟  HCLK/8
+// 	SysTick_Config(72000);
+	
 	fac_us=SystemCoreClock/8000000;	//为系统时钟的1/8  
 	fac_ms=(u16)fac_us*1000;//非ucos下,代表每个ms需要的systick时钟数   
+
 }								    
 
-#ifdef OS_CRITICAL_METHOD	//使用了ucos
-//延时nus
-//nus为要延时的us数.		    								   
-void delay_us(u32 nus)
-{		
-	u32 ticks;
-	u32 told,tnow,tcnt=0;
-	u32 reload=SysTick->LOAD;	//LOAD的值	    	 
-	ticks=nus*fac_us; 			//需要的节拍数	  		 
-	tcnt=0;
-	told=SysTick->VAL;        	//刚进入时的计数器值
-	while(1)
-	{
-		tnow=SysTick->VAL;	
-		if(tnow!=told)
-		{	    
-			if(tnow<told)tcnt+=told-tnow;//这里注意一下SYSTICK是一个递减的计数器就可以了.
-			else tcnt+=reload-tnow+told;	    
-			told=tnow;
-			if(tcnt>=ticks)break;//时间超过/等于要延迟的时间,则退出.
-		}  
-	}; 									    
-}
-//延时nms
-//nms:要延时的ms数
-void delay_ms(u16 nms)
-{	
-	if(OSRunning==TRUE)//如果os已经在跑了	    
-	{		  
-		if(nms>=fac_ms)//延时的时间大于ucos的最少时间周期 
-		{
-   			OSTimeDly(nms/fac_ms);//ucos延时
-		}
-		nms%=fac_ms;				//ucos已经无法提供这么小的延时了,采用普通方式延时    
-	}
-	delay_us((u32)(nms*1000));	//普通方式延时,此时ucos无法启动调度.
-}
-#else//不用ucos时
 //延时nus
 //nus为要延时的us数.		    								   
 void delay_us(u32 nus)
@@ -90,9 +54,51 @@ void delay_ms(u16 nms)
 	SysTick->CTRL&=~SysTick_CTRL_ENABLE_Msk;       //关闭计数器
 	SysTick->VAL =0X00;       //清空计数器	  	    
 } 
-#endif
+
+
+struct SysTime_REG SysTime;
 
 
 
+void SysTimeInt(void){
+	
+	SysTime.SysTimeCNT10ms++;
+	SysTime.SysTimeFLG10ms = 1;
+	if((SysTime.SysTimeCNT10ms%10) == 0){
+		SysTime.SysTimeCNT100ms++;
+		SysTime.SysTimeFLG100ms = 1;
+		if(SysTime.SysTimeCNT10ms>=60000)SysTime.SysTimeCNT10ms = 0;
+		
+		if((SysTime.SysTimeCNT100ms%10) == 0){
+			SysTime.SysTimeCNT1s++;
+			SysTime.SysTimeFLG1s = 1;
+			if(SysTime.SysTimeCNT100ms>=60000)SysTime.SysTimeCNT100ms = 0;
+			
+			if((SysTime.SysTimeCNT1s%60) == 0){
+				SysTime.SysTimeCNT1min++;
+				SysTime.SysTimeFLG1min = 1;
+				if(SysTime.SysTimeCNT1s>=60000)SysTime.SysTimeCNT1s = 0;
+				
+				if((SysTime.SysTimeCNT1min%60) == 0){
+					SysTime.SysTimeCNT1h++;
+					SysTime.SysTimeFLG1h = 1;
+					if(SysTime.SysTimeCNT1min>=60000)SysTime.SysTimeCNT1min = 0;
+				}
+			}
+		}
+	}
+	
+	
+}
+
+
+
+
+u16 GetDtTime(u16 timebuf,u16 timecnt){
+	if(timebuf > timecnt)
+		return (60000 - timebuf + timecnt);
+	else
+		return (timecnt - timebuf);
+}
 
 

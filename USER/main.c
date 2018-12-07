@@ -11,14 +11,14 @@
 
 #define APP_ADDR  0x08004000
 
+
 long data[PixLg][PixLg]={0};
 long ext[3]={0,0,0};
 u8 ext_add[2]={0,0};
-u16 RDFlag;
-extern u8 test_mod;
-extern u8 color_mod;
-extern u8 Save_Times[2];
-extern u16 SaveTimes;
+
+extern u8 SAVE_NUM[2];
+
+struct SysState_REG SysState;
 
 
 void key_do(void){
@@ -27,23 +27,23 @@ void key_do(void){
 	u8 j=0x20;
 	u8 buf=0;
 	u8 PlayFlag = 0;
-	u8 color_mod_buf = color_mod;
-	RDFlag = 0;
+	SysState.ColrModeBak = SysState.ColrMode;
+	SysState.PlayNum = 0;
 	if(key==1){                     //更换色彩卡
-		switch (color_mod){ 
-			case BW:color_mod=Iron;break;
-			case Iron:color_mod=RB;break;
-			case RB:color_mod=BW;break;
-			default:color_mod=Iron;break;
+		switch (SysState.ColrMode){ 
+			case BW:SysState.ColrMode=Iron;break;
+			case Iron:SysState.ColrMode=RB;break;
+			case RB:SysState.ColrMode=BW;break;
+			default:SysState.ColrMode=Iron;break;
 		}
-		color_mod_buf = color_mod;
+		SysState.ColrModeBak = SysState.ColrMode;
 	}
 	if(key==2){               //更换测温点模式
-		switch (test_mod){
-			case none:test_mod=midd;break;
-			case midd:test_mod=exts;break;
-			case exts:test_mod=none;break;
-			default:test_mod=none;break;
+		switch (SysState.DispMeas){
+			case none:SysState.DispMeas=midd;break;
+			case midd:SysState.DispMeas=exts;break;
+			case exts:SysState.DispMeas=none;break;
+			default:SysState.DispMeas=none;break;
 		}
 	}
 	if(key==3){             //暂停画面   
@@ -66,7 +66,7 @@ void key_do(void){
 			key=KEY_Scan(0);
 			if(j==0xE8){
 				j=0;
-				color_mod = color_mod_buf;
+				SysState.ColrMode = SysState.ColrModeBak;
 				key=Play_BadApple();
 			}
 			if(key==1){
@@ -74,16 +74,16 @@ void key_do(void){
 					j=0;
 				j|=0x80;
 				j&=0xF0;
-				RDFlag=read_saved(RDFlag,0);
+				SysState.PlayNum=read_saved(SysState.PlayNum,0);
 				PlayFlag = 1;
 			}
 			if(key==2){               //更换测温点模式
 				j=0;
-				switch (test_mod){
-					case none:test_mod=midd;break;
-					case midd:test_mod=exts;break;
-					case exts:test_mod=none;break;
-					default:test_mod=none;break;
+				switch (SysState.DispMeas){
+					case none:SysState.DispMeas=midd;break;
+					case midd:SysState.DispMeas=exts;break;
+					case exts:SysState.DispMeas=none;break;
+					default:SysState.DispMeas=none;break;
 				}
 				Draw_img();       //显示图片
 				Draw_data();       //显示数据
@@ -97,7 +97,7 @@ void key_do(void){
 					}
 					Draw_Camera();
 				}else{
-					RDFlag=read_saved(RDFlag,1);
+					SysState.PlayNum=read_saved(SysState.PlayNum,1);
 					if((j&0x80) == 0x80){
 						if((j&0x40)!=0)
 							j=0;
@@ -132,16 +132,30 @@ void key_do(void){
 		}
 		Draw_Camera();
 	}
-	color_mod = color_mod_buf;
+	SysState.ColrMode = SysState.ColrModeBak;
 }
 
 
+
+void SaveIMG(void){
+	
+	if(SysState.SaveFlag){
+		SysState.SaveFlag = 0;
+		Draw_Wait();
+		if(SD_Init()==0){
+			save_bmp();
+		}
+		Draw_Camera();
+	}
+	
+}
 
 
 u8 init_all(void){
 	u8 state=0;
 	u8 buf;
 	delay_init();	  //延时函数初始化	  
+	TIM4_Int_Init(1000-1,720-1);
 	LED_Init();		  //初始化与LED连接的硬件接口
 	Lcd_Initialize();
 	SD_Init();
@@ -160,18 +174,19 @@ u8 init_all(void){
 	get_data();    //获取数据
   KEY_Init();
 	if(KEY_Scan(0) == 1)GetFileNum();
-	AT24CXX_Read(0,(u8*)Save_Times,2);  //读取次数
-	if(Save_Times[0] == 0xff && Save_Times[1] == 0xff){
-		Save_Times[0]=Save_Times[1]=0x00;
-		AT24CXX_Write(0,(u8*)Save_Times,2);
+	AT24CXX_Read(0,(u8*)SAVE_NUM,2);  //读取次数
+	if(SAVE_NUM[0] == 0xff && SAVE_NUM[1] == 0xff){
+		SAVE_NUM[0]=SAVE_NUM[1]=0x00;
+		AT24CXX_Write(0,(u8*)SAVE_NUM,2);
 	}
-	SaveTimes=Save_Times[0]|Save_Times[1]<<8;
+	SysState.SaveNum = SAVE_NUM[0]|SAVE_NUM[1]<<8;
 	for(buf=0;buf<6;buf++){
 		BatPct=Get_Battery();
 	}
 	if(state)delay_ms(900);
 	BatPct=Get_Battery();
 	return 0;
+	
 }
 
 
@@ -180,25 +195,43 @@ int main(void){
 	init_all();      //初始化系统
 	DrawBack();      //绘制背景
 	
+	SysState.DispStep = Normal;
+	SysState.ColrMode = Iron;
+	SysState.DispMeas = none;
+	
+	GetImg();
 	disp_slow();
 	disp_fast();
-	//Play_BadApple();         //test
+	
 	while(1){
-		key_do();
-		disp_slow();
-		disp_fast();
-#ifdef SIZEx5
-		if(USART_RX_BUF==0)delay_ms(60);	//串口12ms
-		else delay_ms(48);
-		if(color_mod==RB)delay_ms(5);
-		if(color_mod==BW)delay_ms(6);
-#endif
-#ifdef SIZEx8
-		if(USART_RX_BUF==0)delay_ms(32);	//串口12ms
-		else delay_ms(20);
-		if(color_mod==RB)delay_ms(10);
-		if(color_mod==BW)delay_ms(15);
-#endif
+		
+		if(SysTime.SysTimeFLG10ms){
+			key_do();
+			SysTime.SysTimeFLG10ms = 0;
+		}
+		
+		if(SysTime.SysTimeFLG100ms){
+			GetImg();
+			disp_fast();
+			disp_slow();
+			SysTime.SysTimeFLG100ms = 0;
+		}
+		
+		if(SysTime.SysTimeFLG1s){
+			SysTime.SysTimeFLG1s = 0;
+		}
+		
+		if(SysTime.SysTimeFLG1min){
+			SysTime.SysTimeFLG1min = 0;
+		}
+		
+		if(SysTime.SysTimeFLG1h){
+			SysTime.SysTimeFLG1h = 0;
+		}
+		
 	}
+	
+	
+	
 }
 
