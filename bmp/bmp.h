@@ -9,6 +9,13 @@
 #include "malloc.h"
 
 
+#define BW  1
+#define Iron 2
+#define RB 3
+
+#define none 0
+#define midd 1
+#define exts 2
 
 
 // static FRESULT FAT_SAVABuff( char *path , u8 *DataBuff ,u16 DataLength );

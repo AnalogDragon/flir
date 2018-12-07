@@ -14,7 +14,6 @@
 #include "pic.h"
 #include "myiic.h"
 #include "adc.h"
-#include "delay.h"
 /*
  * 函数名：LCD_GPIO_Config
  * 描述  ：根据FSMC配置LCD的I/O
@@ -22,6 +21,8 @@
  * 输出  ：无
  * 调用  ：内部调用        
  */
+ u8 color_mod=Iron;
+ u8 test_mod=none;
 
 extern long data[PixLg][PixLg];
 extern long ext[3];
@@ -476,7 +477,7 @@ u16 To_HSB(u8 num){
 	u8 R=0,G=0,B=0;
 	float a;
 	u32 b;
-	if(SysState.ColrMode == Iron){
+	if(color_mod==Iron){
 		a=0.7*num;
 		a+=20;
 		num=(u8)a;
@@ -505,9 +506,9 @@ u16 To_HSB(u8 num){
 			G = 255;
 			R = 255;
 		}
-	}else if(SysState.ColrMode == BW){
+	}else if(color_mod==BW){
 		R=G=B=num;
-	}else if(SysState.ColrMode == RB){
+	}else if(color_mod==RB){
 		b=240*num;
 		b/=255;
 		num=(u8)b;
@@ -641,10 +642,7 @@ void Draw_img(void){
 	Lcd_ColorBox(123,40,1,1,data[PixLg-1][0]);
 	Lcd_ColorBox(123,159,1,1,data[PixLg-1][PixLg-1]);
 	for (i = 0; i < PixLg*PixLg; i++){
-// 		if(SysState.DispMeas == midd && i/PixLg>29 && i/PixLg<43 && i%PixLg>19 && i%PixLg<38)
-// 			;
-// 		else
-			Lcd_ColorBox(5+i/PixLg*2,41+i%PixLg*2,2,2,data[i/PixLg][i%PixLg]);
+		Lcd_ColorBox(5+i/PixLg*2,41+i%PixLg*2,2,2,data[i/PixLg][i%PixLg]);
 	}
 }
 
@@ -668,6 +666,9 @@ void blowup(void) {
 		data[i % 7 * 8 + 1 + 6][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t2 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t6;
 		data[i % 7 * 8 + 1 + 7][i / 7 + 1] = 1+ data[i % 7 * 8 + 1][i / 7 + 1] * t1 + data[i % 7 * 8 + 1 + 8][i / 7 + 1] * t7;
 	}
+// 	for (i = 0; i < 64; i++) {
+// 		data[PixLg-1-(i / 8 * PixGain + 1)][i % 8 * PixGain + 1] ++;//dat;
+// 	}
 	for (i = 0; i < 57; i++) {
 		data[0][i + 1] = data[1][i + 1];
 		data[58][i + 1] = data[57][i + 1];
@@ -724,17 +725,17 @@ void Draw_A_num(u16 x, u16 y,u8 size,u8 back,u8 num){
 
 void Draw_menu(void){
 	u16 i;
-	if(SysState.DispMeas == none){
+	if(test_mod==none){
 		BlockWrite(35,69,0,16);
 		for (i = 0; i < 1190; i++){
 			*(__IO u16 *) (Bank1_LCD_D) = gImage_menu[i];
 		}
-	}else if(SysState.DispMeas == midd){
+	}else if(test_mod==midd){
 		BlockWrite(35,69,0,16);
 		for (i = 0; i < 1190; i++){
 			*(__IO u16 *) (Bank1_LCD_D) = gImage_menu[1190+i];
 		}
-	}else if(SysState.DispMeas == exts){
+	}else if(test_mod==exts){
 		BlockWrite(35,69,0,16);
 		for (i = 0; i < 1190; i++){
 			*(__IO u16 *) (Bank1_LCD_D) = gImage_menu[2380+i];
@@ -828,12 +829,12 @@ void Draw_data(void){
 #endif
 	
 #ifdef SIZEx8
-	if(SysState.DispMeas == midd){            //mid
+	if(test_mod==midd){            //mid
 		Lcd_ColorBox(61,99,2,2,Black);
 		Lcd_ColorBox(66,82,24,35,White);
 		
   	Draw_Num(69,84,1,mid);
-	}else if(SysState.DispMeas == exts){
+	}else if(test_mod==exts){
 		Lcd_ColorBox(7+(7-ext_add[0]/8)*16,43+(ext_add[0]%8)*16,2,2,Black);
 		Lcd_ColorBox(7+(7-ext_add[1]/8)*16,43+(ext_add[1]%8)*16,2,2,White);
 	}
@@ -846,9 +847,9 @@ void Draw_data(void){
 
 
 void Draw_color(void){
-	if(SysState.ColrMode == Iron)			LCD_Fill_Pic(4,33,120,7,gImage_Iron);
-	else if(SysState.ColrMode == RB)	LCD_Fill_Pic(4,33,120,7,gImage_RB);
-	else if(SysState.ColrMode == BW)	LCD_Fill_Pic(4,33,120,7,gImage_BW);
+	if(color_mod==Iron)LCD_Fill_Pic(4,33,120,7,gImage_Iron);
+	else if(color_mod==RB)LCD_Fill_Pic(4,33,120,7,gImage_RB);
+	else if(color_mod==BW)LCD_Fill_Pic(4,33,120,7,gImage_BW);
 }
 
 
@@ -867,7 +868,7 @@ void Draw_BackPlay(void){
 void Draw_Warning(void){
 	int max=(int)(ext[0])*10/4;
 	int min=(int)(ext[1])*10/4;
-	if(max>800 || min<0   //超过最值
+	if(max>1250 || min<-550   //超过最值
 		|| BatPct<5){					//电量过低
 			LCD_Fill_Pic(52,18,12,13,gImage_Warning);
 	}else{
@@ -875,17 +876,13 @@ void Draw_Warning(void){
 	}
 }
 
-void GetImg(void){
+void disp_fast(void){    //快速刷新
 	get_data();    //获取数据
 	blowup();      //插值
 	get_img();      //插值转换为rgb图片
-	logo_move();       //运行指示
-}
-
-
-void disp_fast(void){    //快速刷新
 	Draw_img();       //显示图片
 	Draw_data();       //显示数据
+	logo_move();       //运行指示
 }
 
 void disp_slow(void){     //慢速刷新+按键操作刷新
@@ -896,20 +893,6 @@ void disp_slow(void){     //慢速刷新+按键操作刷新
 	Draw_menu();    //显示菜单
 	Draw_color();
 	Draw_Warning();
-	
-// 	if(SysState.DispStep != Normal){
-// 		
-// 		if(SysTime.SysTimeCNT100ms%16>7){			//闪烁图标
-// 			if(SysState.DispStep == Pause)
-// 				Lcd_ColorBox(75,5,9,9,White);
-// 			else if(SysState.DispStep == Play)
-// 				Draw_BackPlay();
-// 		}
-// 		else{
-// 			Lcd_ColorBox(75,5,9,9,Black);
-// 		}
-// 		
-// 	}
 }
 
 

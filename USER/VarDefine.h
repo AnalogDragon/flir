@@ -46,38 +46,5 @@
 #endif
 
 
-typedef enum DISPSTEP{
-  Normal = 1,
-  Pause,
-  Play,
-}DISPSTEP;
-
-
-typedef enum DISPMODE{
-  Iron = 1,
-  RB,
-  BW,
-}DISPMODE;
-
-typedef enum DISPMEAS{
-  none = 1,
-  midd,
-  exts,
-}DISPMEAS;
-
-
-struct SysState_REG{
-	u8 DispStep;
-	u8 ColrMode;
-	u8 ColrModeBak;
-	u8 DispMeas;
-	u8 SaveFlag;
-	u8 RefreshFlag;
-	u16 PlayNum;
-	u16 SaveNum;
-};
-
-extern struct SysState_REG SysState;
-
 
 #endif

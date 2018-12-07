@@ -21,6 +21,13 @@
 #define Lcd_Light_ON   GPIOA->BSRR = GPIO_Pin_6;
 #define Lcd_Light_OFF  GPIOA->BRR  = GPIO_Pin_6;
 
+#define BW  1
+#define Iron 2
+#define RB 3
+
+#define none 0
+#define midd 1
+#define exts 2
 
 
 //Lcd初始化及其低级控制函数
@@ -52,7 +59,6 @@ void Draw_Wait(void);
 u16 ReadPixel(u16 x,u8 y);
 void disp_open(void);
 void LCD_Pic2(u16 x,u8 y,u8 leg, u8* pic);
-void GetImg(void);
 void disp_fast(void);
 void disp_slow(void);
 void Draw_BackPlay(void);

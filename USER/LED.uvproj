@@ -44,7 +44,7 @@
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
           <OutputDirectory>..\OBJ\</OutputDirectory>
-          <OutputName>Thermal_V116</OutputName>
+          <OutputName>Thermal_V115</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
@@ -75,7 +75,7 @@
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>h:\Program Files\keil 4\ARM\ARMCC\bin\fromelf.exe  --bin -o ..\OBJ\Thermal_V116.bin ..\OBJ\Thermal_V116.axf</UserProg1Name>
+            <UserProg1Name>h:\Program Files\keil 4\ARM\ARMCC\bin\fromelf.exe  --bin -o ..\OBJ\Thermal_V115.bin ..\OBJ\Thermal_V115.axf</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>

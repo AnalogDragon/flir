@@ -18,9 +18,10 @@ DIR dr;
 extern long data[PixLg][PixLg];
 extern long ext[3];
 extern u8 ext_add[2];
-
-u8 SAVE_NUM[2]={0};
-
+extern u8 test_mod;
+extern u8 color_mod;
+u8 Save_Times[2]={0,0};
+u16 SaveTimes=0;
 char name_buf[35];
 char dir_buf[12];
 
@@ -96,13 +97,13 @@ void get_bmp_line_x8(u8 row){
 	Image_line[358]=(u8)((((data[58-row][58-58]>>6)&0xff)<<3)&0xff);
 	Image_line[359]=(u8)((((data[58-row][58-58]>>11)&0xff)<<3)&0xff);
 	
-	if(SysState.DispMeas == midd){
+	if(test_mod==midd){
 		if(row==29){
 			Image_line[29*6+0+3]=Image_line[29*6+0+6]=0;
 			Image_line[29*6+1+3]=Image_line[29*6+1+6]=0;
 			Image_line[29*6+2+3]=Image_line[29*6+2+6]=0;
 		}
-	}else if(SysState.DispMeas == exts){
+	}else if(test_mod==exts){
 		if(ext_add[0]/8*8+1==row){
 			i=(7-(ext_add[0]%8))*8+1;
 			Image_line[i*6+0+3]=Image_line[i*6+0+6]=0;
@@ -401,19 +402,19 @@ u8 save_bmp(void){
 	UINT bw_f;  
 	long File_Byte;
 
-	if(SysState.SaveNum>60000)
+	if(SaveTimes>60000)
 		return 1;
 	
 	if(f_mount(&fs,"0:",1)!=FR_OK)return 1;
 	
 	if(f_opendir(&dr, "0:/picture")!=FR_OK){
 		f_mkdir("0:/picture");
-		SysState.SaveNum = 0;
+		SaveTimes=0;
 	}
 	
-	SysState.SaveNum++;
-	sprintf(name_buf,"0:/picture/%04d/%05d.bmp",(SysState.SaveNum-1)/20,SysState.SaveNum);
-	sprintf(dir_buf,"0:/picture/%04d",(SysState.SaveNum-1)/20);
+	SaveTimes++;
+	sprintf(name_buf,"0:/picture/%04d/%05d.bmp",(SaveTimes-1)/20,SaveTimes);
+	sprintf(dir_buf,"0:/picture/%04d",(SaveTimes-1)/20);
 	
 	if(f_opendir(&dr, dir_buf)!=FR_OK){
 		f_mkdir(dir_buf);
@@ -422,23 +423,23 @@ u8 save_bmp(void){
 	
 	
 	while(res_f == FR_OK){
-		if(SysState.SaveNum>60000){
+		if(SaveTimes>60000){
 			return 1;             //存满了，跳出
 		}
-		SysState.SaveNum++;
+		SaveTimes++;
 		f_close(&fdst_f); 
 		f_closedir(&dr);
-		sprintf(name_buf,"0:/picture/%04d/%05d.bmp",(SysState.SaveNum-1)/20,SysState.SaveNum);
-		sprintf(dir_buf,"0:/picture/%04d",(SysState.SaveNum-1)/20);
+		sprintf(name_buf,"0:/picture/%04d/%05d.bmp",(SaveTimes-1)/20,SaveTimes);
+		sprintf(dir_buf,"0:/picture/%04d",(SaveTimes-1)/20);
 		if(f_opendir(&dr, dir_buf)!=FR_OK){
 			f_mkdir(dir_buf);
 		}
 		res_f = f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ );
 	}
 	
-	SAVE_NUM[0]=SysState.SaveNum&0xff;
-	SAVE_NUM[1]=(SysState.SaveNum>>8)&0xff;	
-	AT24CXX_Write(0,(u8*)SAVE_NUM,2);	
+	Save_Times[0]=SaveTimes&0xff;
+	Save_Times[1]=(SaveTimes>>8)&0xff;	
+	AT24CXX_Write(0,(u8*)Save_Times,2);	
 	/*-------save grap-------*/
 	File_Byte = 0;
 	f_open( &fdst_f, name_buf , FA_CREATE_NEW | FA_READ | FA_WRITE );
@@ -462,7 +463,7 @@ u8 save_bmp(void){
 		else if(i%2==1)get_bmp_line_x8(i/2);
 #endif
 		
-		if((SysState.DispMeas == midd) && (i>34) && (i<57)){
+		if(test_mod==midd && i>34 && i<57){
 			box_mid();
 			if(i>36 && i<55)
 			  get_num_line(44,(int)(ext[2])*10/4,1,i-37);
@@ -474,21 +475,21 @@ u8 save_bmp(void){
 		
 	}
 	
-	if(SysState.ColrMode == Iron){
+	if(color_mod==Iron){
 		for(i=0;i<8;i++){
 // 			FAT_SAVABuff(name_buf,(u8*)Image_line_Iron,360);
 			f_write(&fdst_f, Image_line_Iron, 360, &bw_f);
 			File_Byte+=360;
 			f_lseek(&fdst_f,File_Byte);
 		}
-	}else if(SysState.ColrMode == RB){
+	}else if(color_mod==RB){
 		for(i=0;i<8;i++){
 // 			FAT_SAVABuff(name_buf,(u8*)Image_line_RB,360);			
 			f_write(&fdst_f, Image_line_RB, 360, &bw_f);
 			File_Byte+=360;
 			f_lseek(&fdst_f,File_Byte);
 		}
-	}else if(SysState.ColrMode == BW){
+	}else if(color_mod==BW){
 		for(i=0;i<8;i++){
 // 			FAT_SAVABuff(name_buf,(u8*)Image_line_BW,360);
 			f_write(&fdst_f, Image_line_BW, 360, &bw_f);
@@ -540,8 +541,8 @@ u8 save_bmp(void){
 		f_lseek(&fdst_f,File_Byte);
 	}
 	
-	Image_line[0] = SysState.ColrMode;
-	Image_line[1] = SysState.DispMeas;
+	Image_line[0]=color_mod;
+	Image_line[1]=test_mod;
 	
 	for(i=0;i<3;i++){
 		Image_line[i*4+2] = (ext[i]>>24)&0xff;
@@ -567,39 +568,39 @@ void GetFileNum(void){
 	FIL fdst_f;
 	u16 SaveTimesBak = 0;
 	
-	SysState.SaveNum = 1;
+	SaveTimes=1;
 	
 	if(f_mount(&fs,"0:",1)!=FR_OK){
-		SAVE_NUM[0]=0;
-		SAVE_NUM[1]=0;
-		AT24CXX_Write(0,(u8*)SAVE_NUM,2);
+		Save_Times[0]=0;
+		Save_Times[1]=0;
+		AT24CXX_Write(0,(u8*)Save_Times,2);
 		return;
 	}
 	
 	if(f_opendir(&dr, "0:/picture")!=FR_OK){
-		SAVE_NUM[0]=0;
-		SAVE_NUM[1]=0;
-		AT24CXX_Write(0,(u8*)SAVE_NUM,2);
+		Save_Times[0]=0;
+		Save_Times[1]=0;
+		AT24CXX_Write(0,(u8*)Save_Times,2);
 		return;
 	}
 	
-	while((SysState.SaveNum < (SaveTimesBak+100)) && (SysState.SaveNum < 60000)){
-		sprintf(name_buf,"0:/picture/%04d/%05d.bmp",(SysState.SaveNum-1)/20,SysState.SaveNum);
-		sprintf(dir_buf,"0:/picture/%04d",(SysState.SaveNum-1)/20);
+	while((SaveTimes < (SaveTimesBak+100)) && (SaveTimes < 60000)){
+		sprintf(name_buf,"0:/picture/%04d/%05d.bmp",(SaveTimes-1)/20,SaveTimes);
+		sprintf(dir_buf,"0:/picture/%04d",(SaveTimes-1)/20);
 		if(f_opendir(&dr, dir_buf)==FR_OK){
-			if(f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ )==FR_OK){
-				SaveTimesBak = SysState.SaveNum;
+			if(f_open(&fdst_f, name_buf, FA_OPEN_EXISTING | FA_READ )!=FR_OK){
+				SaveTimesBak = SaveTimes;
 			}
 			f_closedir(&dr);
 		}
-		SysState.SaveNum ++;
+		SaveTimes ++;
 	}
 	
-	SysState.SaveNum = SaveTimesBak;
+	SaveTimes = SaveTimesBak;
 	
-	SAVE_NUM[0]=SysState.SaveNum&0xff;
-	SAVE_NUM[1]=(SysState.SaveNum>>8)&0xff;
-	AT24CXX_Write(0,(u8*)SAVE_NUM,2);
+	Save_Times[0]=SaveTimes&0xff;
+	Save_Times[1]=(SaveTimes>>8)&0xff;
+	AT24CXX_Write(0,(u8*)Save_Times,2);	
 	
 	f_close(&fdst_f); 
 	f_closedir(&dr);
@@ -691,7 +692,7 @@ u8 Play_BadApple(void){
 // 		LED0=~LED0;     //刷新率测试
 		delay_ms(42);
 		i++;
-	}while(File_Byte>=i);
+	}while(File_Byte>=i && KEY_Scan(0)==0);
 	f_close(&fdst_f); 
 	f_closedir(&dr);
 	f_mount(&fs,NULL,1); 
@@ -754,17 +755,17 @@ u16 read_saved(u16 num,u8 flag){
 	
 	Databuf=0;
 	
-	if(SysState.SaveNum < 1)  
+	if(SaveTimes<1)  
 		return 0;
 	
-	if(SysState.SaveNum < num){
+	if(SaveTimes < num){
 		if(flag == 1)
 			num = 0;
 	}
 	
 	if(0 == num){
 		if(flag == 0)
-			num = SysState.SaveNum+1;
+			num = SaveTimes+1;
 	}
 	
 	if(f_mount(&fs,"0:",1)!=FR_OK)
@@ -778,7 +779,7 @@ u16 read_saved(u16 num,u8 flag){
 		num--;
 		
 		if(num == 0)
-			num = SysState.SaveNum; //从头检查
+			num = SaveTimes; //从头检查
 		
 		for(;;){
 			sprintf(name_buf,"0:/picture/%04d/%05d.bmp",(num-1)/20,num);
@@ -801,7 +802,7 @@ u16 read_saved(u16 num,u8 flag){
 			f_closedir(&dr);
 			num--;
 			if(num == 0){
-				num = SysState.SaveNum; //从头检查
+				num = SaveTimes; //从头检查
 				sprintf(name_buf,"0:/picture/%04d/%05d.bmp",(num-1)/20,num);
 				sprintf(dir_buf,"0:/picture/%04d",(num-1)/20);
 				if(f_opendir(&dr, dir_buf)==FR_OK){
@@ -826,7 +827,7 @@ u16 read_saved(u16 num,u8 flag){
 		
 		num++;
 		
-		if(num > SysState.SaveNum)
+		if(num>SaveTimes)
 			num=1;
 		
 		for(;;){
@@ -849,7 +850,7 @@ u16 read_saved(u16 num,u8 flag){
 			f_close(&fdst_f);
 			f_closedir(&dr);
 			num++;
-			if(num > SysState.SaveNum){
+			if(num>SaveTimes){
 				num = 1; //从头检查
 				sprintf(name_buf,"0:/picture/%04d/%05d.bmp",(num-1)/20,num);
 				sprintf(dir_buf,"0:/picture/%04d",(num-1)/20);
@@ -877,7 +878,7 @@ u16 read_saved(u16 num,u8 flag){
 	
 	if(filesw == 1){
 		
-		SysState.DispMeas = none;
+		test_mod=none;
 		
 		for(i=0;i<120;i++){   //读取图片区
 			f_lseek(&fdst_f,i*120*3+54);  //改变指针
@@ -899,7 +900,7 @@ u16 read_saved(u16 num,u8 flag){
 		ext[0]=ext[1]=ext[2]=0;
 		ext_add[0]=0;
 		ext_add[1]=63;
- 		Draw_data();       //显示数据//显示清零
+		Draw_data();       //显示数据//显示清零
 		
 		for(i=0;i<18;i++){   //读取图片区46800
 			f_lseek(&fdst_f,i*120*3+46863);  //改变指针
@@ -926,11 +927,11 @@ u16 read_saved(u16 num,u8 flag){
 		f_lseek(&fdst_f,43254);  //改变指针
 		f_read(&fdst_f, read_buf, 3, &bw_f);
 		if(check_str(read_buf,Image_line_Iron,3) == 0){
-			SysState.ColrMode = Iron;
+			color_mod=Iron;
 		}else if(check_str(read_buf,Image_line_RB,3) == 0){
-			SysState.ColrMode = RB;
+			color_mod=RB;
 		}else if(check_str(read_buf,Image_line_BW,3) == 0){
-			SysState.ColrMode = BW;
+			color_mod=BW;
 		}
 		Draw_color();
 		
@@ -951,8 +952,8 @@ u16 read_saved(u16 num,u8 flag){
 		
 		f_read(&fdst_f, read_buf, 16, &bw_f);
 		
-		SysState.ColrMode = read_buf[0];
-		SysState.DispMeas  = read_buf[1];
+		color_mod = read_buf[0];
+		test_mod  = read_buf[1];
 		
 		for(i=0;i<3;i++){
 			ext[i] = (read_buf[i*4+2]<<24)|(read_buf[i*4+3]<<16)|(read_buf[i*4+4]<<8)|(read_buf[i*4+5]<<0);
@@ -963,6 +964,7 @@ u16 read_saved(u16 num,u8 flag){
 		
 		Draw_img();       //显示图片
 		Draw_data();       //显示数据
+		disp_slow();
 		
 		f_close(&fdst_f); 
 		f_closedir(&dr);
@@ -970,8 +972,7 @@ u16 read_saved(u16 num,u8 flag){
 		
 	}
 	
-// 	Draw_BackPlay();
-	
+	Draw_BackPlay();
 	if(flag == 0)
 		return num--;
 	if(flag == 1)
