@@ -1,15 +1,24 @@
 #ifndef __SYS_H
 #define __SYS_H	
 #include "stm32f10x.h"
+#include "stdio.h"	
+#include "sdio_sdcard.h"
+#include "ff.h"
+#include "malloc.h"
+#include "diskio.h"
 #include "VarDefine.h"
+#include "app.h"
+#include "led.h"
+#include "delay.h"
+#include "LCD.h"
+#include "usart.h"
+#include "myiic.h"
+#include "timer.h"
+#include "adc.h"
+#include "key.h"
+#include "bmp.h"
 
-//0,不支持ucos
-//1,支持ucos
-#define SYSTEM_SUPPORT_UCOS		0		//定义系统文件夹是否支持UCOS
-																	    
-	 
-//位带操作,实现51类似的GPIO控制功能
-//具体实现思想,参考<<CM3权威指南>>第五章(87页~92页).
+
 //IO口操作宏定义
 #define BITBAND(addr, bitnum) ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2)) 
 #define MEM_ADDR(addr)  *((volatile unsigned long  *)(addr)) 

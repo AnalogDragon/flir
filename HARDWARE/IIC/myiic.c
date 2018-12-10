@@ -1,6 +1,4 @@
 #include "myiic.h"
-#include "delay.h"
-#include "usart.h"
  
 //≥ı ºªØIIC
 void IIC_Init(void)
@@ -159,11 +157,6 @@ u8 Init_AMG8833(void){
 }
 
 
-extern long data[PixLg][PixLg];
-extern long ext[3];
-extern u8 ext_add[2];
-
-u16 test_table[8][8];
 
 
 void data_push(u8 addr,u16 dat){

@@ -1,11 +1,7 @@
-#include "sys.h"
-#include "usart.h"	  
-#include "myiic.h"	  
-
+#include "usart.h"
 
  	
 u8 USART_RX_BUF=0; 
-
 u16 USART_RX_STA=0; 
   
 void uart_init(u32 bound){
@@ -67,8 +63,6 @@ void USART1_IRQHandler(void){
 	}
 }
 
-extern long data[PixLg][PixLg];
-
 
 void send_once(void){
 	u8 i;
@@ -101,10 +95,22 @@ void send_once(void){
 		num+=(data[(i / 8 * PixGain + 1)][i % 8 * PixGain + 1]>>8)&0xff;
 	}
 #endif
-	
 
 	while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//等待发送结束
 	USART_SendData(USART1,num&0xff);//向串口1发送数据
 	
 }
+
+void printtime(void){		//调试用
+	
+		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//等待发送结束
+		USART_SendData(USART1,(((KeyState.Key3.HoldTime-60)/60)>>8)&0xff);//向串口1发送数据
+		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//等待发送结束
+		USART_SendData(USART1,((KeyState.Key3.HoldTime-60)/60)&0xff);//向串口1发送数据
+	
+}
+
+
+
+
 

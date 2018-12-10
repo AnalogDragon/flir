@@ -1,31 +1,5 @@
-/******************************************************************************
-
-*重要说明！
-在.h文件中，#define Immediately时是立即显示当前画面
-而如果#define Delay，则只有在执行了LCD_WR_REG(0x0007,0x0173);
-之后才会显示，执行一次LCD_WR_REG(0x0007,0x0173)后，所有写入数
-据都立即显示。
-#define Delay一般用在开机画面的显示，防止显示出全屏图像的刷新过程
-******************************************************************************/
-#include "stm32f10x.h"
 #include "LCD.h"
-#include "stm32f10x_fsmc.h"
-#include "key.h"
 #include "pic.h"
-#include "myiic.h"
-#include "adc.h"
-#include "delay.h"
-/*
- * 函数名：LCD_GPIO_Config
- * 描述  ：根据FSMC配置LCD的I/O
- * 输入  ：无
- * 输出  ：无
- * 调用  ：内部调用        
- */
-
-extern long data[PixLg][PixLg];
-extern long ext[3];
-extern u8 ext_add[2];
 
 
 void LCD_GPIO_Config(void){
@@ -225,21 +199,23 @@ LCD_Rst();
 WriteComm(0x11); //Sleep out
 Delay(120); //Delay 120ms
 //------------------------------------ST7735S Frame Rate-----------------------------------------//
-WriteComm(0xB1);
-WriteData(0x05);
-WriteData(0x3A);
-WriteData(0x3A);
+WriteComm(0xB1);  //78hz
+WriteData(0x04);
+WriteData(0x20);
+WriteData(0x20);
+	
 WriteComm(0xB2);
-WriteData(0x05);
-WriteData(0x3A);
-WriteData(0x3A);
+WriteData(0x04);
+WriteData(0x20);
+WriteData(0x20);
+	
 WriteComm(0xB3);
-WriteData(0x05);
-WriteData(0x3A);
-WriteData(0x3A);
-WriteData(0x05);
-WriteData(0x3A);
-WriteData(0x3A);
+WriteData(0x04);
+WriteData(0x20);
+WriteData(0x20);
+WriteData(0x04);
+WriteData(0x20);
+WriteData(0x20);
 //------------------------------------End ST7735S Frame Rate-----------------------------------------//
 WriteComm(0xB4); //Dot inversion
 WriteData(0x03);
@@ -309,7 +285,7 @@ WriteData(0x03);
 WriteData(0x0D);
 //------------------------------------End ST7735S Gamma Sequence-----------------------------------------//
 WriteComm(0x3A); //65k mode
-WriteData(0x55);
+WriteData(0x05);
 
 
 WriteComm(0x29); //Display on
@@ -508,9 +484,9 @@ u16 To_HSB(u8 num){
 	}else if(SysState.ColrMode == BW){
 		R=G=B=num;
 	}else if(SysState.ColrMode == RB){
-		b=240*num;
-		b/=255;
-		num=(u8)b;
+		b = 240*num;
+		b /= 255;
+		num = (u8)b;
 		if (num < 60) {
 			B = 255;
 			G = num*4;
@@ -531,17 +507,17 @@ u16 To_HSB(u8 num){
 			R = 255;
 		}
 	}
-	// RRRRR GGGGG ? BBBBB//
+	// RRRRR GGGGG+G BBBBB//
 	
-	return 0xFFFF&((B&0xf8)>>3|(G&0xf8)<<3|(R&0xf8)<<8);
-}	
+	return 0xFFFF&((B&0xf8)>>3|(G&0xfC)<<3|(R&0xf8)<<8);
+}
 
 
 void logo_move(void){
 	static u8 step=0;
 	u8 i;
 	step++;
-	if(step==8)step=0;
+	if(step == 8)	step = 0;
   BlockWrite(0,2,152,159);
 	for (i = 0; i < 3*8*2; i++){
 		*(__IO u16 *) (Bank1_LCD_D) = gImage_logo[i+(7-step)*3*2];
@@ -585,8 +561,8 @@ void Draw_battery(u8 num){
 
 void get_img(void){
 	u16 i;
-	long diff=ext[0]-ext[1]+2;
-	if(diff<16)diff = 16;
+	long diff = ext[0] - ext[1] + 2;
+	if(diff<16)	diff = 16;
 	for(i=0;i<PixLg*PixLg;i++){
 		data[i/PixLg][i%PixLg]=To_HSB(0xff&((data[i/PixLg][i%PixLg]-ext[1]+1)*0xff/diff));
 	}
@@ -743,7 +719,7 @@ void Draw_menu(void){
 }
 
 void Draw_Num(u16 x,u16 y,u8 bk,int num){    //右上角的位置
-	if(num>=1000){
+	if(num >= 1000){
 		if(bk){
 			Lcd_ColorBox(x,y+9,18,2,White);
 			Lcd_ColorBox(x,y+20,18,2,White);
@@ -754,7 +730,7 @@ void Draw_Num(u16 x,u16 y,u8 bk,int num){    //右上角的位置
 		Draw_A_num(x,y+22,9,bk,num/1000%10);     //max
 		Draw_A_num(x,y+11,9,bk,num/100%10);
 		Draw_A_num(x,y,9,bk,num/10%10);
-	}else if(num>=0){
+	}else if(num >= 0){
 		if(bk){
 			Lcd_ColorBox(x,y,9,5,White);
 			Lcd_ColorBox(x,y+5,18,1,White);
@@ -775,8 +751,8 @@ void Draw_Num(u16 x,u16 y,u8 bk,int num){    //右上角的位置
 		Draw_A_num(x,y+21,9,bk,num/100%10);     //max
 		Draw_A_num(x,y+10,9,bk,num/10%10);
 		Draw_A_num(x+9,y,5,bk,num%10);
-	}else if(num>=-99){
-		num=-num;
+	}else if(num >= -99){
+		num = -num;
 		if(bk){
 			Lcd_ColorBox(x,y,9,5,White);
 			Lcd_ColorBox(x,y+5,18,1,White);
@@ -797,7 +773,7 @@ void Draw_Num(u16 x,u16 y,u8 bk,int num){    //右上角的位置
 		Draw_A_num(x,y+10,9,bk,num/10%10);
 		Draw_A_num(x+9,y,5,bk,num%10);
 	}else{
-		num=-num;
+		num =- num;
 		if(bk){
 			Lcd_ColorBox(x,y+9,18,2,White);
 			LCD_Fill_Pic(x,y+21,18,10,gImage_neg_W);
@@ -812,16 +788,16 @@ void Draw_Num(u16 x,u16 y,u8 bk,int num){    //右上角的位置
 
 
 void Draw_data(void){
-	int max=(int)(ext[0])*10/4;
-	int min=(int)(ext[1])*10/4;
-	int mid=(int)(ext[2])*10/4;
+	int max = (int)(ext[0])*10/4;
+	int min = (int)(ext[1])*10/4;
+	int mid = (int)(ext[2])*10/4;
 	
 #ifdef SIZEx5
-	if(test_mod==midd){            //mid
+	if(SysState.DispMeas == midd){            //mid
 		Lcd_ColorBox(61,100,3,3,Black);
 		Lcd_ColorBox(66,82,24,35,White);
   	Draw_Num(69,84,1,mid);
-	}else if(test_mod==exts){
+	}else if(SysState.DispMeas == exts){
 		Lcd_ColorBox(10+(7-ext_add[0]/8)*15,46+(ext_add[0]%8)*15,3,3,Black);
 		Lcd_ColorBox(10+(7-ext_add[1]/8)*15,46+(ext_add[1]%8)*15,3,3,White);
 	}
@@ -874,44 +850,5 @@ void Draw_Warning(void){
 		Lcd_ColorBox(52,18,12,13,Black);   //消除图标
 	}
 }
-
-void GetImg(void){
-	get_data();    //获取数据
-	blowup();      //插值
-	get_img();      //插值转换为rgb图片
-	logo_move();       //运行指示
-}
-
-
-void disp_fast(void){    //快速刷新
-	Draw_img();       //显示图片
-	Draw_data();       //显示数据
-}
-
-void disp_slow(void){     //慢速刷新+按键操作刷新
- 	BatPct=BatPct*0.95+(float)(Get_Battery())*0.05;
-// 	BatPct = Get_Battery();
-	if(BatPct>99)BatPct = 100;
-	Draw_battery((u8)BatPct);   //电量
-	Draw_menu();    //显示菜单
-	Draw_color();
-	Draw_Warning();
-	
-	if(SysState.DispStep != Normal){
-		
-		if(SysTime.SysTimeCNT100ms%16>7){			//闪烁图标
-			if(SysState.DispStep == Pause)
-				Lcd_ColorBox(75,5,9,9,White);
-			else if(SysState.DispStep == Play)
-				Draw_BackPlay();
-		}
-		else{
-			Lcd_ColorBox(75,5,9,9,Black);
-		}
-		
-	}
-	
-}
-
 
 

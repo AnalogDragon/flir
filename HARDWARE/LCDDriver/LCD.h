@@ -1,9 +1,8 @@
+#ifndef _LCD_H_
+#define _LCD_H_
+
 #include "stm32f10x.h"
-
-
-//屏幕开始时显示方式，注意：当IDelay时显示第一幅画面是逐像素刷新的
-//此时必须手动在刷新结束后加上  LCD_WR_REG(0x0007,0x0173);才能显示
-//当Immediately时没有被注释掉是不需要此过程
+#include "sys.h"
 
 /* 选择BANK1-BORSRAM1 连接 TFT，地址范围为0X60000000~0X63FFFFFF
  * FSMC_A16 接LCD的DC(寄存器/数据选择)脚
@@ -20,7 +19,6 @@
 
 #define Lcd_Light_ON   GPIOA->BSRR = GPIO_Pin_6;
 #define Lcd_Light_OFF  GPIOA->BRR  = GPIO_Pin_6;
-
 
 
 //Lcd初始化及其低级控制函数
@@ -52,9 +50,6 @@ void Draw_Wait(void);
 u16 ReadPixel(u16 x,u8 y);
 void disp_open(void);
 void LCD_Pic2(u16 x,u8 y,u8 leg, u8* pic);
-void GetImg(void);
-void disp_fast(void);
-void disp_slow(void);
 void Draw_BackPlay(void);
 void Draw_Warning(void);
 
@@ -69,7 +64,7 @@ void Draw_Warning(void);
 #define Cyan           0x7FFF
 #define Yellow         0xFFE0
 
-// RRRRR GGGGG ? BBBBB//
+// RRRRR GGGGG+G BBBBB//
 
 
 
@@ -77,6 +72,6 @@ void Draw_Warning(void);
 
 
 
-
+#endif
 
 

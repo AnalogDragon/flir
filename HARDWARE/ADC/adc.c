@@ -1,9 +1,4 @@
  #include "adc.h"
- #include "key.h"
- #include "delay.h"
- #include "stm32f10x_adc.h"
- #include "math.h"
-
 														   
 void  Adc_Init(void)
 { 	
@@ -57,7 +52,9 @@ u16 Get_Adc(u8 ch)
 	return ADC_GetConversionValue(ADC1);	//返回最近一次ADC1规则组的转换结果
 }
 
-u8 Get_Battery(void){
+
+/*电量获取，输出0-100*/
+u8 Get_Battery(void){  
 	
 	u32 temp_val=0;
 	u8 t;
