@@ -34,7 +34,9 @@ void IIC_Ack(void);					//IIC发送ACK信号
 void IIC_NAck(void);				//IIC不发送ACK信号
 void IIC_Send_Byte(u8 txd);			//IIC发送一个字节
 u8 IIC_Read_Byte(unsigned char ack);//IIC读取一个字节
+
 u8 Init_AMG8833(void);
+void data_push(void);
 u8 get_data(void);
 
 					  

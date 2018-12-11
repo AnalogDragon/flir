@@ -9,22 +9,21 @@
 
 #define SIZEx8 8  //插值数量选择
 
-
 #define LcdOldVersion 		//新版的屏幕注释掉这一行。
 
+#define FileBase 	54056			//文件bmp區域容量	
+#define FileNow 	54186			//當前版本適配容量
 
 #ifdef SIZEx5
 
-#define PixLg 40   //軟件分辨率
-#define PixGain 5    //軟件分辨率
+	#define PixLg 40   //軟件分辨率
+	#define PixGain 5    //軟件分辨率
 
-#define FileBase 54414	//文件bmp區域容量	
-#define FileNow 60830		//當前版本適配容量
 
-#define t1 1000/5000     //gain
-#define t2 2000/5000
-#define t3 3000/5000
-#define t4 4000/5000
+	#define t1 1000/5000     //gain
+	#define t2 2000/5000
+	#define t3 3000/5000
+	#define t4 4000/5000
 
 #endif
 
@@ -32,19 +31,16 @@
 
 #ifdef SIZEx8
 
-#define PixLg 59   //軟件分辨率
-#define PixGain 8    //軟件分辨率
+	#define PixLg 59   //軟件分辨率
+	#define PixGain 8    //軟件分辨率
 
-#define FileBase 54414	//文件bmp區域容量	
-#define FileNow 68354		//當前版本適配容量
-
-#define t1 1000/8000     //gain
-#define t2 2000/8000
-#define t3 3000/8000
-#define t4 4000/8000
-#define t5 5000/8000
-#define t6 6000/8000
-#define t7 7000/8000
+	#define t1 1000/8000     //gain
+	#define t2 2000/8000
+	#define t3 3000/8000
+	#define t4 4000/8000
+	#define t5 5000/8000
+	#define t6 6000/8000
+	#define t7 7000/8000
 
 #endif
 
@@ -72,6 +68,7 @@ typedef enum DispMeas{
 struct SysFlag_BITS{
 	u8 SaveFlag:1;
 	u8 RefreshFlag:1;
+	u8 UsartFlag:1;
 };
 
 union SysFlag_REG {
@@ -86,8 +83,6 @@ struct SysState_REG{
 	u8 DispMeas;
 	u8 LightLV;
 	u8 LightLVBak;
-	u16 PlayNum;
-	u16 SaveNum;
 	union SysFlag_REG SysFlag;
 };
 
@@ -141,6 +136,16 @@ struct KeyState_REG{
 
 /*----------------------------*/
 
+struct RecState_REG{
+	u8 ReSet;
+	u16 PlayNum;
+	u16 SaveNum;
+	u8 SAVE_NUM[2];
+};
+
+
+/*----------------------------*/
+
 
 extern FATFS fs;
 extern DIR dr;
@@ -148,11 +153,10 @@ extern FIL fdst_f;
 extern FRESULT res_f;
 
 
+extern u16 PriData[8][8];
 extern long data[PixLg][PixLg];
 extern long ext[3];
 extern u8 ext_add[2];
-
-extern u8 SAVE_NUM[2];
 
 extern char name_buf[64];
 extern char dir_buf[64];
@@ -163,6 +167,7 @@ extern u8 RW_Buf[600];
 extern struct SysState_REG SysState;
 extern struct SysTime_REG SysTime;
 extern struct KeyState_REG KeyState;
+extern struct RecState_REG RecState;
 
 
 

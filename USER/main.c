@@ -24,12 +24,12 @@ u8 init_all(void){
 	get_data();    //获取数据
   KEY_Init();
 	if(KEY_Scan(1) == 1)GetFileNum();
-	AT24CXX_Read(0,(u8*)SAVE_NUM,2);  //读取次数
-	if(SAVE_NUM[0] == 0xff && SAVE_NUM[1] == 0xff){
-		SAVE_NUM[0] = SAVE_NUM[1]=0x00;
-		AT24CXX_Write(0,(u8*)SAVE_NUM,2);
+	AT24CXX_Read(0,(u8*)RecState.SAVE_NUM,2);  //读取次数
+	if(RecState.SAVE_NUM[0] == 0xff && RecState.SAVE_NUM[1] == 0xff){
+		RecState.SAVE_NUM[0] = RecState.SAVE_NUM[1]=0x00;
+		AT24CXX_Write(0,(u8*)RecState.SAVE_NUM,2);
 	}
-	SysState.SaveNum = SAVE_NUM[0]|SAVE_NUM[1]<<8;
+	RecState.SaveNum = RecState.SAVE_NUM[0]|RecState.SAVE_NUM[1]<<8;
 	for(i=0;i<6;i++){
 		BatPct = Get_Battery();
 	}
@@ -61,6 +61,7 @@ int main(void){
 			KeyDo();
 			if(SysState.SysFlag.bit.RefreshFlag){
 				SysState.SysFlag.bit.RefreshFlag = 0;
+				GetImg();
 				disp_fast();
 			}
 			SaveIMG();
@@ -69,10 +70,13 @@ int main(void){
 		
 		if(SysTime.SysTimeFLG100ms){
 			if(SysState.DispStep == Normal){
-				GetImg();
-				disp_fast();
+				get_data();    //获取数据
+				GetImg();				//转换图像
+				disp_fast();		//刷新图像
 			}
 			disp_slow();
+			if(SysState.SysFlag.bit.UsartFlag)	//串口发送
+				send_once();
 			SysTime.SysTimeFLG100ms = 0;
 		}
 		

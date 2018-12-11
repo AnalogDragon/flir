@@ -4,6 +4,8 @@
 
 
 void ChangeLight(void);
+void ChangeMeas(void);
+void ChangeStep(void);
 void KeyDo(void);
 
 void GetImg(void);
