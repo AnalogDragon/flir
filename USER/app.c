@@ -49,8 +49,32 @@ void ChangeStep(void){
 
 void KeyDo(void){
 	
+	if(SysState.SysFlag.bit.PowerLV){
+		
+		if(KeyState.Key1.Flag.bit.KeyOut
+		||KeyState.Key2.Flag.bit.KeyOut
+		||KeyState.Key3.Flag.bit.KeyOut
+		||KeyState.Key4.Flag.bit.KeyOut){
+			KeyState.Key1.Flag.bit.KeyOut = 0;
+			KeyState.Key2.Flag.bit.KeyOut = 0;
+			KeyState.Key3.Flag.bit.KeyOut = 0;
+			KeyState.Key4.Flag.bit.KeyOut = 0;
+			if(SysState.SysFlag.bit.PowerLV > 1 ){
+				ReInitLCD();
+				SysState.SysFlag.bit.LCDState = 1;
+			}
+			SysState.WakeTime = SysTime.SysTimeCNT1s;
+			SysState.SysFlag.bit.PowerLV = 0;
+			if((TIM3->CCR1/10) != SysState.LightLV )TIM3->CCR1 = SysState.LightLV * 10;
+			
+		}
+		return;
+	}
+	
+	
 	if(KeyState.Key1.Flag.bit.KeyOut){
 		KeyState.Key1.Flag.bit.KeyOut = 0;
+		SysState.WakeTime = SysTime.SysTimeCNT1s;
 		
 		if(SysState.DispStep == Normal){
 			ChangeStep();
@@ -58,14 +82,17 @@ void KeyDo(void){
 			SysState.DispStep = Play;
 			Draw_BackPlay();
 			RecState.PlayNum = read_saved(RecState.PlayNum,0);
+			RecState.PlayFlag = 0x80;
 		}else if(SysState.DispStep == Play){
 			RecState.PlayNum = read_saved(RecState.PlayNum,0);
+			RecState.PlayFlag = 0;
 		}
 		
 	}
 		
 
 	if(KeyState.Key2.Flag.bit.KeyOut){
+		SysState.WakeTime = SysTime.SysTimeCNT1s;
 		
 		if(SysState.DispStep == Normal){ //正常模式和新图格式
 			KeyState.Key2.Flag.bit.KeyOut = 0;
@@ -89,10 +116,12 @@ void KeyDo(void){
 				KeyState.Key2.Flag.bit.KeyOut = 0;
 			}
 		}
+		RecState.PlayFlag = 0;
 		
 	}
 		
 	if(KeyState.Key3.Flag.bit.KeyOut){
+		SysState.WakeTime = SysTime.SysTimeCNT1s;
 		
 		if(SysState.DispStep == Normal){
 			KeyState.Key3.Flag.bit.KeyOut = 0;
@@ -109,22 +138,30 @@ void KeyDo(void){
 				SysState.ColrMode = SysState.ColrModeBak;
 				if(SysState.LightLV != SysState.LightLVBak)
 					AT24CXX_WriteOneByte(0x10,SysState.LightLV);				//退出暂停时检查保存亮度设置
+				RecState.PlayFlag = 0;
 				Lcd_ColorBox(75,5,9,9,Black);
 			}
 			if(KeyState.Key3.Flag.bit.KeyOut == 3){		//长按弹起
 				KeyState.Key3.Flag.bit.KeyOut = 0;
 				SysState.LightLV = (TIM3->CCR1/10);		//亮度
+				RecState.PlayFlag = 0;
 			}
 			ChangeLight();
 		}
+		RecState.PlayFlag = 0;
 		
 	}
 		
 	if(KeyState.Key4.Flag.bit.KeyOut){
 		KeyState.Key4.Flag.bit.KeyOut = 0;
-	
+		SysState.WakeTime = SysTime.SysTimeCNT1s;
+		
 		if(SysState.DispStep == Play){
 			RecState.PlayNum = read_saved(RecState.PlayNum,1);
+			if(RecState.PlayFlag == 0x80)
+				RecState.PlayFlag = 0xf0;
+			else
+				RecState.PlayFlag = 0;
 		}else{
 			SysState.SysFlag.bit.SaveFlag = 1;
 		}
@@ -134,19 +171,83 @@ void KeyDo(void){
 
 }
 
+void PowerDown(void){
+	
+	if(GetDtTime(SysState.WakeTime,SysTime.SysTimeCNT1s) > 300){
+		if(SysState.SysFlag.bit.UsartFlag){
+			if(SysState.SysFlag.bit.LCDState){
+				SoftResetLCD();
+				TIM3->CCR1 = 0;
+				SysState.SysFlag.bit.LCDState = 0;
+				SysState.SysFlag.bit.PowerLV = 2;
+			}
+		}
+		else{
+			SysState.SysFlag.bit.Sleep = 1;
+			SysState.SysFlag.bit.PowerLV = 3;
+		}
+	}
+	else if(GetDtTime(SysState.WakeTime,SysTime.SysTimeCNT1s) > 60){
+		if(TIM3->CCR1 != 10)TIM3->CCR1 = 10;
+		SysState.SysFlag.bit.PowerLV = 1;
+	}
+	
+	SleepMode();
+}
 
+
+typedef  void (*pFunction)(void);
+pFunction Jump_To_Application;
+
+void SleepMode(void){
+	
+	if(SysState.SysFlag.bit.Sleep){
+		
+		TIM3->CCR1 = 0;
+		ShutDownAMG8833();
+		SoftResetLCD();
+		
+		while(1){
+			if(!KEY1 || !KEY2 || !KEY3 || !KEY4)
+				break;
+		}	
+		
+		Jump_To_Application = (pFunction)*(__IO uint32_t*) (APP_ADDR + 4) ;
+		__set_MSP(*(__IO uint32_t*) APP_ADDR);
+		Jump_To_Application();
+		
+		while(1);
+	}
+}
+
+void DataClean(void){
+	
+	SysState.DispStep = Normal;
+	SysState.ColrMode = Iron;
+	SysState.DispMeas = none;
+	SysState.WakeTime = SysTime.SysTimeCNT1s;
+	KeyState.Key1.Flag.bit.KeyOut = 0;
+	KeyState.Key2.Flag.bit.KeyOut = 0;
+	KeyState.Key3.Flag.bit.KeyOut = 0;
+	KeyState.Key4.Flag.bit.KeyOut = 0;
+	SysState.SysFlag.bit.Sleep = 0;
+	
+}
 
 void GetImg(void){
+	if(!SysState.SysFlag.bit.LCDState)return;
 	data_push();		//数据转移
 	blowup();      //插值
 	get_img();      //插值转换为rgb图片
-	logo_move();       //运行指示
 }
 
 
 void disp_fast(void){    //快速刷新
+	if(!SysState.SysFlag.bit.LCDState)return;
 	Draw_img();       //显示图片
 	Draw_data();       //显示数据
+	if(SysState.DispStep == Normal)
+		logo_move();       //运行指示
 }
 
 void disp_slow(void){     //慢速刷新+按键操作刷新
@@ -154,6 +255,8 @@ void disp_slow(void){     //慢速刷新+按键操作刷新
  	BatPct = BatPct*0.95+(float)(Get_Battery())*0.05;
 	if(BatPct>99)
 		BatPct = 100;
+	
+	if(!SysState.SysFlag.bit.LCDState)return;
 	
 	Draw_battery((u8)BatPct);   //电量
 	Draw_menu();    //显示菜单
@@ -177,7 +280,7 @@ void disp_slow(void){     //慢速刷新+按键操作刷新
 
 
 u8 Play_BadApple(void){
-	u16 i=1,j,l,flag;	
+	u16 i=1,j,l;	
 	UINT bw_f; 
   u32 File_Byte;
 	
@@ -185,6 +288,7 @@ u8 Play_BadApple(void){
 	if(f_opendir(&dr, "0:/sys")!=FR_OK)return 0;
 	res_f = f_open(&fdst_f, "0:/sys/PlayFile.bin", FA_OPEN_EXISTING | FA_READ  );
 	if( res_f != FR_OK )return 0;
+	SysState.ColrMode = SysState.ColrModeBak;
 	File_Byte = fdst_f.fsize;
   File_Byte/=PixLg*PixLg;
 	ext[0]=932;
@@ -207,16 +311,27 @@ u8 Play_BadApple(void){
 // 		LED0=~LED0;     //刷新率测试
 		delay_ms(42);
 		i++;
-	}while(File_Byte>=i || KEY_Scan(1)==0 );
+	}while(File_Byte>=i && KEY_Scan(1)==0 );
 	f_close(&fdst_f); 
 	f_closedir(&dr);
 	f_mount(&fs,NULL,1); 
 	return 3;
 }
 
-
-
-
-
-
+void PlayVF(void){
+	if((RecState.PlayFlag&0xf0) == 0xf0){
+		RecState.PlayFlag++;
+		if((RecState.PlayFlag&0x0F) == 0x0F){
+			RecState.PlayFlag = 0;
+			if(Play_BadApple()){
+				SysState.DispStep = Normal;
+				delay_ms(20);		//清空按键
+				KeyState.Key1.Flag.bit.KeyOut = 0;
+				KeyState.Key2.Flag.bit.KeyOut = 0;
+				KeyState.Key3.Flag.bit.KeyOut = 0;
+				KeyState.Key4.Flag.bit.KeyOut = 0;
+			}
+		}
+	}
+}
 

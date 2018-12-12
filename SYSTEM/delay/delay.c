@@ -82,6 +82,7 @@ void SysTimeInt(void){
 		}
 	}
 	
+	GetKey();
 	
 }
 

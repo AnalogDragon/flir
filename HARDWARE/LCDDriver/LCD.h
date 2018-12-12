@@ -24,7 +24,9 @@
 //Lcd初始化及其低级控制函数
 void Lcd_Configuration(void);
 void DataToWrite(u16 data);
+void LCD_Rst(void);
 void Lcd_Initialize(void);
+void WriteInitCMD(void);
 void LCD_WR_REG(u16 Index,u16 CongfigTemp);
 void Lcd_WR_Start(void);
 //Lcd高级控制函数
@@ -53,6 +55,8 @@ void LCD_Pic2(u16 x,u8 y,u8 leg, u8* pic);
 void Draw_BackPlay(void);
 void Draw_Warning(void);
 
+void SoftResetLCD(void);
+void ReInitLCD(void);
 
 #define White          0xFFFF
 #define Black          0x0000

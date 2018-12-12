@@ -158,6 +158,18 @@ u8 Init_AMG8833(void){
 
 
 
+u8 ShutDownAMG8833(void){
+	IIC_Start();
+	IIC_Send_Byte(0xD2);
+	if(IIC_Wait_Ack())return 0;
+	IIC_Send_Byte(0x00);
+	if(IIC_Wait_Ack())return 0;
+	IIC_Send_Byte(0x10);
+	if(IIC_Wait_Ack())return 0;
+	IIC_Stop();
+	return 1;
+}
+
 
 void data_push(void){
 	u8 i;

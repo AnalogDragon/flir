@@ -5,6 +5,7 @@
 
 #define APP_ADDR  0x08004000
 
+typedef  void (*pFunction)(void);
 // #define SIZEx5 5
 
 #define SIZEx8 8  //插值数量选择
@@ -66,9 +67,12 @@ typedef enum DispMeas{
 
 
 struct SysFlag_BITS{
-	u8 SaveFlag:1;
-	u8 RefreshFlag:1;
-	u8 UsartFlag:1;
+	u16 SaveFlag:1;
+	u16 RefreshFlag:1;
+	u16 UsartFlag:1;
+	u16 PowerLV:2;
+	u16 Sleep:1;
+	u16 LCDState:1;
 };
 
 union SysFlag_REG {
@@ -83,6 +87,7 @@ struct SysState_REG{
 	u8 DispMeas;
 	u8 LightLV;
 	u8 LightLVBak;
+	u16 WakeTime;
 	union SysFlag_REG SysFlag;
 };
 
@@ -138,6 +143,7 @@ struct KeyState_REG{
 
 struct RecState_REG{
 	u8 ReSet;
+	u8 PlayFlag;
 	u16 PlayNum;
 	u16 SaveNum;
 	u8 SAVE_NUM[2];

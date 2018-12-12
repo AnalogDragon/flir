@@ -80,11 +80,11 @@ void send_once(void){
 	
 	for(i=0;i<64;i++){
 		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//等待发送结束
-		USART_SendData(USART1,PriData[i/8][i%8]&0xff);//向串口1发送数据
-		num+=PriData[i/8][i%8]&0xff;
+		USART_SendData(USART1,PriData[7-i/8][i%8]&0xff);//向串口1发送数据
+		num+=PriData[7-i/8][i%8]&0xff;
 		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//等待发送结束
-		USART_SendData(USART1,(PriData[i/8][i%8]>>8)&0xff);//向串口1发送数据
-		num+=(PriData[i/8][i%8]>>8)&0xff;
+		USART_SendData(USART1,(PriData[7-i/8][i%8]>>8)&0xff);//向串口1发送数据
+		num+=(PriData[7-i/8][i%8]>>8)&0xff;
 	}
 
 	while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//等待发送结束

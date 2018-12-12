@@ -36,6 +36,7 @@ void IIC_Send_Byte(u8 txd);			//IIC发送一个字节
 u8 IIC_Read_Byte(unsigned char ack);//IIC读取一个字节
 
 u8 Init_AMG8833(void);
+u8 ShutDownAMG8833(void);
 void data_push(void);
 u8 get_data(void);
 

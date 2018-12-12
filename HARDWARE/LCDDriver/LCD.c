@@ -108,13 +108,13 @@ static void LCD_FSMC_Config(void)
     FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM1, ENABLE);  
 }
 
-volatile static void Delay(__IO u32 nCount)
+void Delay(u32 nCount)
 {	
-	volatile int i;
+	int i;
 	for(i=0;i<7200;i++)
     for(; nCount != 0; nCount--);
-}  
-  
+}
+
 u16 ssd1289_GetPoint(u16 x,u8 y)
 {
 	 u16 a = 0;
@@ -130,13 +130,15 @@ u16 ssd1289_GetPoint(u16 x,u8 y)
 	 a = *(__IO u16 *) (Bank1_LCD_D); 
    return(a);	  
 }
-volatile static void LCD_Rst(void)
+
+void LCD_Rst(void)
 {			
     Clr_Rst;
     Delay(1000);					   
     Set_Rst;		 	 
     Delay(1000);	
 }
+
 static void WriteComm(u16 CMD)
 {			
 //	CMD=(CMD<<4)|(CMD>>4);
@@ -196,6 +198,43 @@ LCD_FSMC_Config();
 Delay(20);
 LCD_Rst();
 
+WriteInitCMD();
+	
+WriteComm(0x29); //Display on
+	
+Lcd_Clear();
+
+Lcd_Light_OFF;
+
+// Lcd_Light_ON;
+
+//Lcd_ColorBox(0,0,240,320,Yellow);
+
+
+// printf("ReadPixel=%04x\r\n",ReadPixel(10, 9));
+// DrawPixel(10, 10, 0xaaaa);
+// printf("ReadPixel=%04x\r\n",ReadPixel(10, 10));
+// DrawPixel(10, 11, 0XFFFF);
+// printf("ReadPixel=%04x\r\n",ReadPixel(10, 11));
+// DrawPixel(10, 12, 0X00);
+// printf("ReadPixel=%04x\r\n",ReadPixel(10, 12));
+
+// DrawPixel(10, 13, 0Xf800);
+// printf("ReadPixel=%04x\r\n",ReadPixel(10, 13));
+// DrawPixel(10, 14, 0X3e0);
+// printf("ReadPixel=%04x\r\n",ReadPixel(10, 14));
+// DrawPixel(10, 15, 0X1f);
+// printf("ReadPixel=%04x\r\n",ReadPixel(10, 15));
+// WriteComm(0x20);
+
+
+// while(1);
+}
+
+
+
+void WriteInitCMD(void){
+	
 WriteComm(0x11); //Sleep out
 Delay(120); //Delay 120ms
 //------------------------------------ST7735S Frame Rate-----------------------------------------//
@@ -289,34 +328,7 @@ WriteData(0x05);
 
 
 WriteComm(0x29); //Display on
-	
-Lcd_Clear();
 
-Lcd_Light_OFF;
-
-// Lcd_Light_ON;
-
-//Lcd_ColorBox(0,0,240,320,Yellow);
-
-
-// printf("ReadPixel=%04x\r\n",ReadPixel(10, 9));
-// DrawPixel(10, 10, 0xaaaa);
-// printf("ReadPixel=%04x\r\n",ReadPixel(10, 10));
-// DrawPixel(10, 11, 0XFFFF);
-// printf("ReadPixel=%04x\r\n",ReadPixel(10, 11));
-// DrawPixel(10, 12, 0X00);
-// printf("ReadPixel=%04x\r\n",ReadPixel(10, 12));
-
-// DrawPixel(10, 13, 0Xf800);
-// printf("ReadPixel=%04x\r\n",ReadPixel(10, 13));
-// DrawPixel(10, 14, 0X3e0);
-// printf("ReadPixel=%04x\r\n",ReadPixel(10, 14));
-// DrawPixel(10, 15, 0X1f);
-// printf("ReadPixel=%04x\r\n",ReadPixel(10, 15));
-// WriteComm(0x20);
-
-
-// while(1);
 }
 /******************************************
 º¯ÊýÃû£ºLcdÐ´ÃüÁîº¯Êý
@@ -562,7 +574,7 @@ void Draw_battery(u8 num){
 void get_img(void){
 	u16 i;
 	long diff = ext[0] - ext[1] + 2;
-	if(diff<16)	diff = 16;
+	if(diff<20)	diff = 20;
 	for(i=0;i<PixLg*PixLg;i++){
 		data[i/PixLg][i%PixLg]=To_HSB(0xff&((data[i/PixLg][i%PixLg]-ext[1]+1)*0xff/diff));
 	}
@@ -851,4 +863,11 @@ void Draw_Warning(void){
 	}
 }
 
+void SoftResetLCD(void){
+	WriteComm(0x01);
+}
 
+
+void ReInitLCD(void){
+	WriteInitCMD();
+}
