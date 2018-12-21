@@ -2,7 +2,7 @@
 #include "bmpdata.h"
 
 
-#ifdef SIZEx5
+#if (Size == SIZEx5)
 void get_bmp_line_x5(u8 row){
 	u8 i;
 	for(i=0;i<40;i++){
@@ -10,13 +10,13 @@ void get_bmp_line_x5(u8 row){
 		RW_Buf[i*9+1]=RW_Buf[i*9+1+3]=RW_Buf[i*9+1+6]=(u8)((((data[39-row][39-i]>>6)&0xff)<<3)&0xff);
 		RW_Buf[i*9+2]=RW_Buf[i*9+2+3]=RW_Buf[i*9+2+6]=(u8)((((data[39-row][39-i]>>11)&0xff)<<3)&0xff);
 	}
-	if(SysState.DispMeas == midd){
+	if(SysState.DispMeas == Midd){
 		if(row==20){
 			RW_Buf[20*9]=RW_Buf[20*9+3]=RW_Buf[20*9+6]=0;
 			RW_Buf[20*9+1]=RW_Buf[20*9+1+3]=RW_Buf[20*9+1+6]=0;
 			RW_Buf[20*9+2]=RW_Buf[20*9+2+3]=RW_Buf[20*9+2+6]=0;
 		}
-	}else if(SysState.DispMeas == exts){
+	}else if(SysState.DispMeas == Exts){
 		if(ext_add[0]/8*5+2==row){
 			i=(7-(ext_add[0]%8))*5+2;
 			RW_Buf[i*9]=RW_Buf[i*9+3]=RW_Buf[i*9+6]=0;
@@ -31,9 +31,7 @@ void get_bmp_line_x5(u8 row){
 		}
 	}
 }	
-#endif
-
-#ifdef SIZEx8
+#elif (Size == SIZEx8)
 void get_bmp_line_x8(u8 row){
 	u8 i;
 	for(i=0;i<59;i++){
@@ -48,13 +46,13 @@ void get_bmp_line_x8(u8 row){
 	RW_Buf[358]=(u8)((((data[58-row][58-58]>>6)&0xff)<<3)&0xff);
 	RW_Buf[359]=(u8)((((data[58-row][58-58]>>11)&0xff)<<3)&0xff);
 	
-	if(SysState.DispMeas == midd){
+	if(SysState.DispMeas == Midd){
 		if(row==29){
 			RW_Buf[29*6+0+3]=RW_Buf[29*6+0+6]=0;
 			RW_Buf[29*6+1+3]=RW_Buf[29*6+1+6]=0;
 			RW_Buf[29*6+2+3]=RW_Buf[29*6+2+6]=0;
 		}
-	}else if(SysState.DispMeas == exts){
+	}else if(SysState.DispMeas == Exts){
 		if(ext_add[0]/8*8+1==row){
 			i=(7-(ext_add[0]%8))*8+1;
 			RW_Buf[i*6+0+3]=RW_Buf[i*6+0+6]=0;
@@ -254,19 +252,17 @@ u8 save_bmp(void){
 	
 	for(i=0;i<120;i++){
 		
-#ifdef SIZEx5				//5x²åÖµ“QËã
+#if (Size == SIZEx5)			//5x²åÖµ“QËã
 		if(i%3==0){
 		  get_bmp_line_x5(i/3);
 		}
-#endif
-		
-#ifdef SIZEx8
+#elif (Size == SIZEx8)
 		if(i==0)get_bmp_line_x8(0);
  		else if(i==119)get_bmp_line_x8(58);
 		else if(i%2==1)get_bmp_line_x8(i/2);
 #endif
 		
-		if((SysState.DispMeas == midd) && (i>34) && (i<57)){
+		if((SysState.DispMeas == Midd) && (i>34) && (i<57)){
 			box_mid();
 			if(i>36 && i<55)
 			  get_num_line(44,(int)(ext[2])*10/4,1,i-37);
@@ -276,26 +272,56 @@ u8 save_bmp(void){
 		f_lseek(&fdst_f,File_Byte);
 		
 	}
-	
-	if(SysState.ColrMode == Iron){
-		for(i=0;i<8;i++){
-			f_write(&fdst_f, Image_line_Iron, 360, &bw_f);
-			File_Byte+=360;
-			f_lseek(&fdst_f,File_Byte);
-		}
-	}else if(SysState.ColrMode == RB){
-		for(i=0;i<8;i++){
-			f_write(&fdst_f, Image_line_RB, 360, &bw_f);
-			File_Byte+=360;
-			f_lseek(&fdst_f,File_Byte);
-		}
-	}else if(SysState.ColrMode == BW){
-		for(i=0;i<8;i++){
-			f_write(&fdst_f, Image_line_BW, 360, &bw_f);
-			File_Byte+=360;
-			f_lseek(&fdst_f,File_Byte);
-		}
+	switch(SysState.ColrMode){
+		
+		case Iron:
+			for(i=0;i<8;i++){
+				f_write(&fdst_f, Image_line_Iron, 360, &bw_f);
+				File_Byte+=360;
+				f_lseek(&fdst_f,File_Byte);
+			}
+			break;
+			
+		case IronMax:
+			for(i=0;i<8;i++){
+				f_write(&fdst_f, Image_line_IronMax, 360, &bw_f);
+				File_Byte+=360;
+				f_lseek(&fdst_f,File_Byte);
+			}
+			break;
+			
+		case IronMin:
+			for(i=0;i<8;i++){
+				f_write(&fdst_f, Image_line_IronMin, 360, &bw_f);
+				File_Byte+=360;
+				f_lseek(&fdst_f,File_Byte);
+			}
+			break;
+			
+		case RB:
+			for(i=0;i<8;i++){
+				f_write(&fdst_f, Image_line_RB, 360, &bw_f);
+				File_Byte+=360;
+				f_lseek(&fdst_f,File_Byte);
+			}
+			break;
+			
+		case BW:
+			for(i=0;i<8;i++){
+				f_write(&fdst_f, Image_line_BW, 360, &bw_f);
+				File_Byte+=360;
+				f_lseek(&fdst_f,File_Byte);
+			}
+			break;
+		
+		default:
+			for(i=0;i<8;i++){
+				f_write(&fdst_f, Image_line_Iron, 360, &bw_f);
+				File_Byte+=360;
+				f_lseek(&fdst_f,File_Byte);
+			}
 	}
+	
 	get_Black_line();
 	
 	f_write(&fdst_f, RW_Buf, 360, &bw_f);
@@ -578,7 +604,7 @@ u16 read_saved(u16 num,u8 flag){
 	
 	if(filesw == 1){
 		
-		SysState.DispMeas = none;
+		SysState.DispMeas = None;
 		RecState.ReSet = 0;
 		
 		for(i=0;i<120;i++){   //¶ÁÈ¡Í¼Æ¬Çø

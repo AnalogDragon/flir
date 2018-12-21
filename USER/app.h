@@ -5,7 +5,7 @@
 
 void ChangeLight(void);
 void ChangeMeas(void);
-void ChangeStep(void);
+void ChangeColor(u8 Flag);
 void KeyDo(void);
 void PowerDown(void);
 void SleepMode(void);

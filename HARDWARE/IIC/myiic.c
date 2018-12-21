@@ -187,11 +187,9 @@ void data_push(void){
 			ext_add[1]=i;
 		}
 	
-#ifdef SIZEx5
+#if (Size == SIZEx5)
 		data[PixLg-1-(i / 8 * PixGain + 2)][i % 8 * PixGain + 2] = PriData[i/8][i%8];//КэѕЭМоід
-#endif
-	
-#ifdef SIZEx8
+#elif (Size == SIZEx8)
 		data[PixLg-1-(i / 8 * PixGain + 1)][i % 8 * PixGain + 1] = PriData[i/8][i%8];
 #endif
 	

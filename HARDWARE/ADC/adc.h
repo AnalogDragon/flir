@@ -3,10 +3,6 @@
 #include "sys.h"
 
 
-extern float BatPct;
-
-
-
 
 void Adc_Init(void);
 u16  Get_Adc(u8 ch); 

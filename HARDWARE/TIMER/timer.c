@@ -79,7 +79,7 @@ void TIM3_PWM_Init(u16 arr,u16 psc)
  
 	TIM_Cmd(TIM3, ENABLE);  //Ê¹ÄÜTIM3
 	
-	TIM3->CCR1=100;
+	TIM3->CCR1=50;
 
 }
 

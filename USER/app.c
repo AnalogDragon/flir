@@ -29,19 +29,50 @@ void ChangeLight(void){
 
 void ChangeMeas(void){
 	switch (SysState.DispMeas){
-		case none:	SysState.DispMeas = midd;		break;
-		case midd:	SysState.DispMeas = exts;		break;
-		case exts:	SysState.DispMeas = none;		break;
-		default:		SysState.DispMeas = none;		break;
+		case None:	SysState.DispMeas = Midd;		break;
+		case Midd:	SysState.DispMeas = Exts;		break;
+		case Exts:	SysState.DispMeas = None;		break;
+		default:		SysState.DispMeas = None;		break;
 	}
 }
 
-void ChangeStep(void){			
-	switch (SysState.ColrMode){ 
-		case BW:		SysState.ColrMode = Iron;		break;
-		case Iron:	SysState.ColrMode = RB;			break;
-		case RB:		SysState.ColrMode = BW;			break;
-		default:		SysState.ColrMode = Iron;		break;
+void ChangeColor(u8 Flag){			//0:主色调之间切换 1:复色调切换 2:主副都切换
+	if(Flag == 0){
+		switch (SysState.ColrMode){ 
+			case Iron:	SysState.ColrMode = RB;			break;
+			case RB:		SysState.ColrMode = BW;			break;
+			case BW:		SysState.ColrMode = Iron;		break;	
+			
+			case IronMax:	SysState.ColrMode = Iron;			break;	
+			case IronMin:	SysState.ColrMode = Iron;			break;
+			
+			default:			SysState.ColrMode = Iron;		break;
+		}
+	}
+	else if(Flag == 1){
+		switch (SysState.ColrMode){ 
+			case Iron:	SysState.ColrMode = IronMax;			break;
+			case RB:		SysState.ColrMode = IronMax;			break;
+			case BW:		SysState.ColrMode = IronMax;		break;	
+			
+			case IronMax:	SysState.ColrMode = IronMin;			break;	
+			case IronMin:	SysState.ColrMode = Iron;			break;
+			
+			default:			SysState.ColrMode = Iron;		break;
+		}
+	}else if(Flag == 2){
+		switch (SysState.ColrMode){ 
+			case Iron:	SysState.ColrMode = RB;			break;
+			case RB:		SysState.ColrMode = BW;			break;
+			case BW:		SysState.ColrMode = IronMax;		break;	
+			
+			case IronMax:	SysState.ColrMode = IronMin;			break;	
+			case IronMin:	SysState.ColrMode = Iron;			break;
+			
+			default:			SysState.ColrMode = Iron;		break;
+		}
+	}else{
+		SysState.ColrMode = Iron;
 	}
 }
 
@@ -73,17 +104,24 @@ void KeyDo(void){
 	
 	
 	if(KeyState.Key1.Flag.bit.KeyOut){
-		KeyState.Key1.Flag.bit.KeyOut = 0;
 		SysState.WakeTime = SysTime.SysTimeCNT1s;
 		
 		if(SysState.DispStep == Normal){
-			ChangeStep();
+			if(KeyState.Key1.Flag.bit.KeyOut == 2){		//短按
+				KeyState.Key1.Flag.bit.KeyOut = 0;
+				ChangeColor(0);
+			}else if(KeyState.Key1.HoldTime > 40 || KeyState.Key1.Flag.bit.KeyOut == 3){	//长按
+				KeyState.Key1.Flag.bit.KeyOut = 0;
+				ChangeColor(1);
+			}
 		}else if(SysState.DispStep == Pause){
-			SysState.DispStep = Play;
+			KeyState.Key1.Flag.bit.KeyOut = 0;
+			SysState.DispStep = Review;
 			Draw_BackPlay();
 			RecState.PlayNum = read_saved(RecState.PlayNum,0);
 			RecState.PlayFlag = 0x80;
-		}else if(SysState.DispStep == Play){
+		}else if(SysState.DispStep == Review){
+			KeyState.Key1.Flag.bit.KeyOut = 0;
 			RecState.PlayNum = read_saved(RecState.PlayNum,0);
 			RecState.PlayFlag = 0;
 		}
@@ -107,7 +145,7 @@ void KeyDo(void){
 					
 				}else if(KeyState.Key2.HoldTime > 40 || KeyState.Key2.Flag.bit.KeyOut == 3){	//长按切换颜色
 					KeyState.Key2.Flag.bit.KeyOut = 0;
-					ChangeStep();
+					ChangeColor(2);
 					SysState.SysFlag.bit.RefreshFlag = 1;
 					
 				}
@@ -156,7 +194,7 @@ void KeyDo(void){
 		KeyState.Key4.Flag.bit.KeyOut = 0;
 		SysState.WakeTime = SysTime.SysTimeCNT1s;
 		
-		if(SysState.DispStep == Play){
+		if(SysState.DispStep == Review){
 			RecState.PlayNum = read_saved(RecState.PlayNum,1);
 			if(RecState.PlayFlag == 0x80)
 				RecState.PlayFlag = 0xf0;
@@ -210,9 +248,9 @@ void SleepMode(void){
 		while(1){
 			if(!KEY1 || !KEY2 || !KEY3 || !KEY4)
 				break;
-		}	
+		}
 		
-		Jump_To_Application = (pFunction)*(__IO uint32_t*) (APP_ADDR + 4) ;
+		Jump_To_Application = (pFunction)*(__IO uint32_t*) (APP_ADDR + 4);
 		__set_MSP(*(__IO uint32_t*) APP_ADDR);
 		Jump_To_Application();
 		
@@ -224,7 +262,7 @@ void DataClean(void){
 	
 	SysState.DispStep = Normal;
 	SysState.ColrMode = Iron;
-	SysState.DispMeas = none;
+	SysState.DispMeas = None;
 	SysState.WakeTime = SysTime.SysTimeCNT1s;
 	KeyState.Key1.Flag.bit.KeyOut = 0;
 	KeyState.Key2.Flag.bit.KeyOut = 0;
@@ -268,7 +306,7 @@ void disp_slow(void){     //慢速刷新+按键操作刷新
 		if(SysTime.SysTimeCNT100ms%16>7){			//闪烁图标
 			if(SysState.DispStep == Pause)
 				Lcd_ColorBox(75,5,9,9,White);
-			else if(SysState.DispStep == Play)
+			else if(SysState.DispStep == Review)
 				Draw_BackPlay();
 		}
 		else{

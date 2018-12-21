@@ -107,6 +107,6 @@ u8 Get_Battery(void){
 	return (u8)temp_val_back2;
 }
 
-float BatPct = 0;
+
 
 

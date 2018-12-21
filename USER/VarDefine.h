@@ -6,16 +6,18 @@
 #define APP_ADDR  0x08004000
 
 typedef  void (*pFunction)(void);
-// #define SIZEx5 5
 
+#define SIZEx5 5
 #define SIZEx8 8  //插值数量选择
+
+#define Size SIZEx8
 
 #define LcdOldVersion 		//新版的屏幕注释掉这一行。
 
 #define FileBase 	54056			//文件bmp區域容量	
 #define FileNow 	54186			//當前版本適配容量
 
-#ifdef SIZEx5
+#if (Size == SIZEx5)
 
 	#define PixLg 40   //軟件分辨率
 	#define PixGain 5    //軟件分辨率
@@ -26,11 +28,7 @@ typedef  void (*pFunction)(void);
 	#define t3 3000/5000
 	#define t4 4000/5000
 
-#endif
-
-
-
-#ifdef SIZEx8
+#elif (Size == SIZEx8)
 
 	#define PixLg 59   //軟件分辨率
 	#define PixGain 8    //軟件分辨率
@@ -49,7 +47,7 @@ typedef  void (*pFunction)(void);
 typedef enum DispStep{
   Normal = 1,
   Pause,
-  Play,
+  Review,
 }DispStep;
 
 
@@ -57,12 +55,17 @@ typedef enum ColrMode{
   Iron = 1,
   RB,
   BW,
+	
+  IronMax,
+  IronMin,
+	
 }ColrMode;
 
+
 typedef enum DispMeas{
-  none = 1,
-  midd,
-  exts,
+  None = 1,
+  Midd,
+  Exts,
 }DispMeas;
 
 
@@ -169,6 +172,7 @@ extern char dir_buf[64];
 
 extern u8 RW_Buf[600];
 
+extern float BatPct;
 
 extern struct SysState_REG SysState;
 extern struct SysTime_REG SysTime;

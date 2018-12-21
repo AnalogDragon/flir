@@ -462,63 +462,94 @@ void DrawBack(void){
 
 u16 To_HSB(u8 num){
 	u8 R=0,G=0,B=0;
+	u8 ColrModeBuf;
 	float a;
 	u32 b;
-	if(SysState.ColrMode == Iron){
-		a=0.7*num;
-		a+=20;
-		num=(u8)a;
-		if (num < 64) {
-			B = (unsigned char)(num * 4);
-			G = 0;
-			R = 0;
-		}
-		else if (num < 96) {
-			B = 255;
-			G = 0;
-			R = (unsigned char)(4 * (num - 64));
-		}
-		else if (num < 128) {
-			B = (unsigned char)(256 - 8 * (num - 95));
-			G = 0;
-			R = (unsigned char)(4 * (num - 64) - 1);
-		}
-		else if (num < 191) {
-			B = 0;
-			G = (unsigned char)(4 * (num - 128));
-			R = 255;
-		}
-		else {
-			B = (unsigned char)(4 * (num - 191));
-			G = 255;
-			R = 255;
-		}
-	}else if(SysState.ColrMode == BW){
-		R=G=B=num;
-	}else if(SysState.ColrMode == RB){
-		b = 240*num;
-		b /= 255;
-		num = (u8)b;
-		if (num < 60) {
-			B = 255;
-			G = num*4;
-			R = 0;
-		}
-		else if (num < 120) {
-			B = (120-num)*4;
-			G = 255;
-			R = 0;
-		}
-		else if (num < 180) {
-			B = 0;
-			G = 255;
-			R = (num-119)*4;
-		}else{
-			B = 0;
-			G = (240-num)*4;
-			R = 255;
-		}
+	
+	//判断部分伪彩色
+	if((SysState.ColrMode == Iron)
+	||(SysState.ColrMode == IronMax && num >= 153)
+	||(SysState.ColrMode == IronMin && num <= 103)){
+		ColrModeBuf = Iron;
 	}
+	else if(SysState.ColrMode == RB){
+		ColrModeBuf = RB;
+	}
+	else{
+		ColrModeBuf = BW;
+	}
+	
+	switch (ColrModeBuf){
+		
+		case Iron:{
+			a=0.7*num;
+			a+=20;
+			num=(u8)a;
+			if (num < 64) {
+				B = (unsigned char)(num * 4);
+				G = 0;
+				R = 0;
+			}
+			else if (num < 96) {
+				B = 255;
+				G = 0;
+				R = (unsigned char)(4 * (num - 64));
+			}
+			else if (num < 128) {
+				B = (unsigned char)(256 - 8 * (num - 95));
+				G = 0;
+				R = (unsigned char)(4 * (num - 64) - 1);
+			}
+			else if (num < 191) {
+				B = 0;
+				G = (unsigned char)(4 * (num - 128));
+				R = 255;
+			}
+			else {
+				B = (unsigned char)(4 * (num - 191));
+				G = 255;
+				R = 255;
+			}
+			break;
+		}
+		
+		case RB:{
+			b = 240*num;
+			b /= 255;
+			num = (u8)b;
+			if (num < 60) {
+				B = 255;
+				G = num*4;
+				R = 0;
+			}
+			else if (num < 120) {
+				B = (120-num)*4;
+				G = 255;
+				R = 0;
+			}
+			else if (num < 180) {
+				B = 0;
+				G = 255;
+				R = (num-119)*4;
+			}else{
+				B = 0;
+				G = (240-num)*4;
+				R = 255;
+			}
+			break;
+		}
+			
+		case BW:{
+			R=G=B=num;
+			break;
+		}
+		
+		default:
+			R=G=B=num;
+		
+	}
+	
+	
 	// RRRRR GGGGG+G BBBBB//
 	
 	return 0xFFFF&((B&0xf8)>>3|(G&0xfC)<<3|(R&0xf8)<<8);
@@ -580,7 +611,8 @@ void get_img(void){
 	}
 }
 
-#ifdef SIZEx5
+#if (Size == SIZEx5)
+
 void Draw_img(void){
 	u16 i;
 	//BlockWrite(4,123,40,159);
@@ -613,9 +645,8 @@ void blowup(void) {
 	}
 	ext[2]=data[19][19];
 }
-#endif
+#elif (Size == SIZEx8)
 
-#ifdef SIZEx8
 void Draw_img(void){
 	u16 i;
 	for (i = 0; i < PixLg; i++){
@@ -712,17 +743,17 @@ void Draw_A_num(u16 x, u16 y,u8 size,u8 back,u8 num){
 
 void Draw_menu(void){
 	u16 i;
-	if(SysState.DispMeas == none){
+	if(SysState.DispMeas == None){
 		BlockWrite(35,69,0,16);
 		for (i = 0; i < 1190; i++){
 			*(__IO u16 *) (Bank1_LCD_D) = gImage_menu[i];
 		}
-	}else if(SysState.DispMeas == midd){
+	}else if(SysState.DispMeas == Midd){
 		BlockWrite(35,69,0,16);
 		for (i = 0; i < 1190; i++){
 			*(__IO u16 *) (Bank1_LCD_D) = gImage_menu[1190+i];
 		}
-	}else if(SysState.DispMeas == exts){
+	}else if(SysState.DispMeas == Exts){
 		BlockWrite(35,69,0,16);
 		for (i = 0; i < 1190; i++){
 			*(__IO u16 *) (Bank1_LCD_D) = gImage_menu[2380+i];
@@ -799,32 +830,50 @@ void Draw_Num(u16 x,u16 y,u8 bk,int num){    //右上角的位置
 }
 
 
+void Draw_Tab(u16 x,u16 y,u16 Color){
+	if(x<10)x=10;
+	if(y<47)y=47;
+	if(x>116)x=116;
+	if(y>153)y=153;
+	Lcd_ColorBox(x,y-6,2,4,Color);
+	Lcd_ColorBox(x,y+2,2,4,Color);
+	Lcd_ColorBox(x-5,y-1,4,2,Color);
+	Lcd_ColorBox(x+3,y-1,4,2,Color);
+	
+}
+
+
 void Draw_data(void){
 	int max = (int)(ext[0])*10/4;
 	int min = (int)(ext[1])*10/4;
 	int mid = (int)(ext[2])*10/4;
 	
-#ifdef SIZEx5
-	if(SysState.DispMeas == midd){            //mid
-		Lcd_ColorBox(61,100,3,3,Black);
-		Lcd_ColorBox(66,82,24,35,White);
-  	Draw_Num(69,84,1,mid);
-	}else if(SysState.DispMeas == exts){
-		Lcd_ColorBox(10+(7-ext_add[0]/8)*15,46+(ext_add[0]%8)*15,3,3,Black);
-		Lcd_ColorBox(10+(7-ext_add[1]/8)*15,46+(ext_add[1]%8)*15,3,3,White);
-	}
-#endif
+#if (Size == SIZEx5)
 	
-#ifdef SIZEx8
-	if(SysState.DispMeas == midd){            //mid
-		Lcd_ColorBox(61,99,2,2,Black);
-		Lcd_ColorBox(66,82,24,35,White);
-		
-  	Draw_Num(69,84,1,mid);
-	}else if(SysState.DispMeas == exts){
-		Lcd_ColorBox(7+(7-ext_add[0]/8)*16,43+(ext_add[0]%8)*16,2,2,Black);
-		Lcd_ColorBox(7+(7-ext_add[1]/8)*16,43+(ext_add[1]%8)*16,2,2,White);
+	if(SysState.DispMeas == Midd){            //mid
+		Draw_Tab(61,99,Black);
+		Lcd_ColorBox(72,82,24,35,White);
+  	Draw_Num(75,84,1,mid);
+	}else if(SysState.DispMeas == Exts){
+// 		Lcd_ColorBox(10+(7-ext_add[0]/8)*15,46+(ext_add[0]%8)*15,3,3,Black);
+// 		Lcd_ColorBox(10+(7-ext_add[1]/8)*15,46+(ext_add[1]%8)*15,3,3,White);
+		Draw_Tab(10+(7-ext_add[0]/8)*15,47+(ext_add[0]%8)*15,Black);
+		Draw_Tab(10+(7-ext_add[1]/8)*15,47+(ext_add[1]%8)*15,White);
 	}
+	
+#elif (Size == SIZEx8)
+	
+	if(SysState.DispMeas == Midd){            //mid
+		Draw_Tab(61,99,Black);
+		Lcd_ColorBox(72,82,24,35,White);
+  	Draw_Num(75,84,1,mid);
+	}else if(SysState.DispMeas == Exts){
+// 		Lcd_ColorBox(7+(7-ext_add[0]/8)*16,43+(ext_add[0]%8)*16,2,2,Black);
+// 		Lcd_ColorBox(7+(7-ext_add[1]/8)*16,43+(ext_add[1]%8)*16,2,2,White);
+		Draw_Tab(7+(7-ext_add[0]/8)*16,44+(ext_add[0]%8)*16,Black);
+		Draw_Tab(7+(7-ext_add[1]/8)*16,44+(ext_add[1]%8)*16,White);
+	}
+	
 #endif
 	
 	Draw_Num(0,0,0,max);
@@ -834,9 +883,34 @@ void Draw_data(void){
 
 
 void Draw_color(void){
-	if(SysState.ColrMode == Iron)			LCD_Fill_Pic(4,33,120,7,gImage_Iron);
-	else if(SysState.ColrMode == RB)	LCD_Fill_Pic(4,33,120,7,gImage_RB);
-	else if(SysState.ColrMode == BW)	LCD_Fill_Pic(4,33,120,7,gImage_BW);
+	
+	switch(SysState.ColrMode){
+		
+		case Iron:
+			LCD_Fill_Pic(4,33,120,7,gImage_Iron);
+			break;
+		
+		case IronMax:
+			LCD_Fill_Pic(4,33,120,7,gImage_IronMax);
+			break;
+		
+		case IronMin:
+			LCD_Fill_Pic(4,33,120,7,gImage_IronMin);
+			break;
+		
+		case RB:
+			LCD_Fill_Pic(4,33,120,7,gImage_RB);
+			break;
+		
+		case BW:
+			LCD_Fill_Pic(4,33,120,7,gImage_BW);
+			break;
+		
+		default:
+			LCD_Fill_Pic(4,33,120,7,gImage_Iron);
+			
+	}
+	
 }
 
 
@@ -871,3 +945,4 @@ void SoftResetLCD(void){
 void ReInitLCD(void){
 	WriteInitCMD();
 }
+

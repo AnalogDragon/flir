@@ -101,7 +101,6 @@ void GetKey(void){
 	GetAKey(&KeyState.Key3,1&(~KEY3));
 	GetAKey(&KeyState.Key4,1&(~KEY4));
 	
-	
 }
 
 

@@ -45,8 +45,8 @@ int main(void){
  	NVIC_SetVectorTable(NVIC_VectTab_FLASH,APP_ADDR&0xFFFFF);
 	
 	init_all();      //初始化系统
-	DrawBack();      //绘制背景
 	
+	DrawBack();      //绘制背景
 	DataClean();
 	
 	GetImg();

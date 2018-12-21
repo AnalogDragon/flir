@@ -16,17 +16,12 @@ char dir_buf[64];
 
 u8 RW_Buf[600] ={0};
 
+float BatPct = 0;
 
 struct SysState_REG SysState;
 struct SysTime_REG SysTime;
 struct KeyState_REG KeyState;
 struct RecState_REG RecState;
-
-
-
-
-
-
 
 
 
