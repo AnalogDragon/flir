@@ -22,9 +22,14 @@
 ***
 
 **注:**
+
 ISP_Downloader.exe并非使用ISP协议下载，只是这样命名;
+
 传输未校验,可能因误码而失败;
+
 开机图片尺寸:160*128,路径//sys/BootGrap.bmp; 
+
 To_clean_old_BMP.exe放在 //picture/To_clean_old_BMP.exe 下运行可以将BMP文件的附加数据删除;
+
 PCB文件位于layer.zip;
 
