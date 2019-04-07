@@ -7,7 +7,8 @@ u8 init_all(void){
 	delay_init();	  //延时函数初始化	  
 	LED_Init();		  //初始化与LED连接的硬件接口
   KEY_Init();
- 	TIM4_Int_Init(1000-1,720-1);
+	NVIC_init(ENABLE);
+ 	TIM4_Int_Init(1000-1,72-1);	//1000sps /1ms
 	Lcd_Initialize();
 	SysState.SysFlag.bit.LCDState = 1;
 	SD_Init();
@@ -42,18 +43,22 @@ u8 init_all(void){
 
 
 int main(void){
- 	NVIC_SetVectorTable(NVIC_VectTab_FLASH,APP_ADDR&0xFFFFF);
+ 	NVIC_SetVectorTable(NVIC_VectTab_FLASH,APP_ROOT_ADDR&0xFFFFF);
 	
 	init_all();      //初始化系统
 	
 	DrawBack();      //绘制背景
 	DataClean();
 	
+	get_data();    //获取数据
 	GetImg();
 	disp_slow();
 	disp_fast();
 	
 	while(1){
+		if(SysTime.SysTimeFLG1ms){
+			SysTime.SysTimeFLG1ms = 0;
+		}
 		
 		if(SysTime.SysTimeFLG10ms){
 			KeyDo();
@@ -73,6 +78,7 @@ int main(void){
 				disp_fast();		//刷新图像
 			}
 			disp_slow();
+			Get_CMD();
 			if(SysState.SysFlag.bit.UsartFlag)	//串口发送
 				send_once();
 			SysTime.SysTimeFLG100ms = 0;

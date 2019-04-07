@@ -53,36 +53,42 @@ void delay_ms(u16 nms)
 	SysTick->VAL =0X00;       //清空计数器	  	    
 } 
 
-
+//1ms系统时钟
 void SysTimeInt(void){
 	
-	SysTime.SysTimeCNT10ms++;
-	SysTime.SysTimeFLG10ms = 1;
-	if((SysTime.SysTimeCNT10ms%10) == 0){
-		SysTime.SysTimeCNT100ms++;
-		SysTime.SysTimeFLG100ms = 1;
-		if(SysTime.SysTimeCNT10ms>=60000)SysTime.SysTimeCNT10ms = 0;
+	SysTime.SysTimeCNT1ms++;
+	SysTime.SysTimeFLG1ms = 1;
+	
+	if((SysTime.SysTimeCNT1ms%10) == 0){
+		if(SysTime.SysTimeCNT1ms>=60000)SysTime.SysTimeCNT1ms = 0;
+		SysTime.SysTimeCNT10ms++;
+		SysTime.SysTimeFLG10ms = 1;
 		
-		if((SysTime.SysTimeCNT100ms%10) == 0){
-			SysTime.SysTimeCNT1s++;
-			SysTime.SysTimeFLG1s = 1;
-			if(SysTime.SysTimeCNT100ms>=60000)SysTime.SysTimeCNT100ms = 0;
+		if((SysTime.SysTimeCNT10ms%10) == 0){
+			if(SysTime.SysTimeCNT10ms>=60000)SysTime.SysTimeCNT10ms = 0;
+			SysTime.SysTimeCNT100ms++;
+			SysTime.SysTimeFLG100ms = 1;
 			
-			if((SysTime.SysTimeCNT1s%60) == 0){
-				SysTime.SysTimeCNT1min++;
-				SysTime.SysTimeFLG1min = 1;
-				if(SysTime.SysTimeCNT1s>=60000)SysTime.SysTimeCNT1s = 0;
+			if((SysTime.SysTimeCNT100ms%10) == 0){
+				if(SysTime.SysTimeCNT100ms>=60000)SysTime.SysTimeCNT100ms = 0;
+				SysTime.SysTimeCNT1s++;
+				SysTime.SysTimeFLG1s = 1;
 				
-				if((SysTime.SysTimeCNT1min%60) == 0){
-					SysTime.SysTimeCNT1h++;
-					SysTime.SysTimeFLG1h = 1;
-					if(SysTime.SysTimeCNT1min>=60000)SysTime.SysTimeCNT1min = 0;
+				if((SysTime.SysTimeCNT1s%60) == 0){
+					if(SysTime.SysTimeCNT1s>=60000)SysTime.SysTimeCNT1s = 0;
+					SysTime.SysTimeCNT1min++;
+					SysTime.SysTimeFLG1min = 1;
+					
+					if((SysTime.SysTimeCNT1min%60) == 0){
+						if(SysTime.SysTimeCNT1min>=60000)SysTime.SysTimeCNT1min = 0;
+						SysTime.SysTimeCNT1h++;
+						SysTime.SysTimeFLG1h = 1;
+					}
 				}
 			}
 		}
+		GetKey();
 	}
-	
-	GetKey();
 	
 }
 

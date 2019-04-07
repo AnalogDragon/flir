@@ -211,6 +211,7 @@ static void SetSysClock(void);
   */
 void SystemInit (void)
 {
+	return;
   /* Reset the RCC clock configuration to the default reset state(for debug purpose) */
   /* Set HSION bit */
   RCC->CR |= (uint32_t)0x00000001;

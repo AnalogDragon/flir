@@ -87,7 +87,7 @@ void TIM3_PWM_Init(u16 arr,u16 psc)
 void TIM4_Int_Init(u16 arr,u16 psc)
 {
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-	NVIC_InitTypeDef NVIC_InitStructure;
+// 	NVIC_InitTypeDef NVIC_InitStructure;
 
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
 	
@@ -99,13 +99,12 @@ void TIM4_Int_Init(u16 arr,u16 psc)
  
 	TIM_ITConfig(TIM4,TIM_IT_Update,ENABLE ); 
 
-	NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn; 
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2; 
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2; 
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_Init(&NVIC_InitStructure);
-
-
+// 	NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn; 
+// 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2; 
+// 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2; 
+// 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+// 	NVIC_Init(&NVIC_InitStructure);
+	
 	TIM_Cmd(TIM4, ENABLE);
 }
 
@@ -113,8 +112,8 @@ void TIM4_Int_Init(u16 arr,u16 psc)
 void TIM4_IRQHandler(void) //用于系统时钟
 {
 	if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET){
+		TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
 		SysTimeInt();
-		TIM_ClearITPendingBit(TIM4, TIM_IT_Update  );
 	}
 }
 

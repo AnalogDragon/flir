@@ -6,9 +6,9 @@ DIR dr;
 FIL fdst_f;
 FRESULT res_f;
 
-u16 PriData[8][8] = {0};
+s16 PriData[8][8] = {0};
 long data[PixLg][PixLg]={0};
-long ext[3]={0,0,0};
+long ext[3]={0,0,0};	//max min midd
 u8 ext_add[2]={0,0};
 
 char name_buf[64];

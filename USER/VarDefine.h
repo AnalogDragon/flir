@@ -3,7 +3,11 @@
 #include "sys.h"
 
 
-#define APP_ADDR  0x08004000
+#define 	APP_ROOT_ADDR 		0x08004000
+#define 	BOOT_ROOT_ADDR 		0x08000000
+#define 	BOOT_USART_ADDR 	0x080023dd
+#define 	BOOT_DELAY_ADDR 	0x08002571
+#define 	BOOT_LOAD_ADDR 		0x08002F11
 
 typedef  void (*pFunction)(void);
 
@@ -72,7 +76,7 @@ typedef enum DispMeas{
 struct SysFlag_BITS{
 	u16 SaveFlag:1;
 	u16 RefreshFlag:1;
-	u16 UsartFlag:1;
+	u16 UsartFlag:4;
 	u16 PowerLV:2;
 	u16 Sleep:1;
 	u16 LCDState:1;
@@ -99,12 +103,14 @@ struct SysState_REG{
 
 struct SysTime_REG
 {
+	volatile u16 SysTimeCNT1ms;
 	volatile u16 SysTimeCNT10ms;
 	volatile u16 SysTimeCNT100ms;
 	volatile u16 SysTimeCNT1s;
 	volatile u16 SysTimeCNT1min;
 	volatile u16 SysTimeCNT1h;
 		
+	volatile u8 SysTimeFLG1ms;
 	volatile u8 SysTimeFLG10ms;
 	volatile u8 SysTimeFLG100ms;
 	volatile u8 SysTimeFLG1s;
@@ -162,7 +168,7 @@ extern FIL fdst_f;
 extern FRESULT res_f;
 
 
-extern u16 PriData[8][8];
+extern s16 PriData[8][8];
 extern long data[PixLg][PixLg];
 extern long ext[3];
 extern u8 ext_add[2];

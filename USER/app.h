@@ -18,6 +18,9 @@ u8 Play_BadApple(void);
 void PlayVF(void);
 void DataClean(void);
 
+void Get_CMD(void);
+void NVIC_init(FunctionalState State);
+
 #endif
 
 

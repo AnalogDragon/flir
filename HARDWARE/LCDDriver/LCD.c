@@ -926,6 +926,11 @@ void Draw_BackPlay(void){
 	LCD_Fill_Pic(75,5,9,9,gImage_backplay);
 }
 
+void Draw_Upgrading(void){
+	Lcd_ColorBox(40,0,48,160,0x2104);
+	LCD_Fill_Pic(57,31,14,98,gImage_Upgrading);
+}
+
 void Draw_Warning(void){
 	int max=(int)(ext[0])*10/4;
 	int min=(int)(ext[1])*10/4;

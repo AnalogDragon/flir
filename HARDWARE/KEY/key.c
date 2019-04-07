@@ -77,7 +77,7 @@ void GetAKey(struct AKeyState_REG *KeyBuf,u8 IOState){
 			;
 		}else{
 			
-			if(KeyBuf->Flag.bit.KeyOut == 1){			//滤波值有效
+			if(KeyBuf->Flag.bit.KeyOut == 1){		//按键未被读取
 				if(KeyBuf->HoldTime < 40)
 					KeyBuf->Flag.bit.KeyOut = 2;		//400ms以内判断为短按
 				else

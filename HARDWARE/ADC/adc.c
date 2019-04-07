@@ -12,7 +12,7 @@ void  Adc_Init(void)
 	//PA1 作为模拟通道输入引脚                         
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;		//模拟输入引脚
-	GPIO_Init(GPIOA, &GPIO_InitStructure);	
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 	ADC_DeInit(ADC1);  //复位ADC1,将外设 ADC1 的全部寄存器重设为缺省值
 

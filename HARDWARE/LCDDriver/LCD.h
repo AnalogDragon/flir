@@ -54,6 +54,7 @@ void disp_open(void);
 void LCD_Pic2(u16 x,u8 y,u8 leg, u8* pic);
 void Draw_BackPlay(void);
 void Draw_Warning(void);
+void Draw_Upgrading(void);
 
 void SoftResetLCD(void);
 void ReInitLCD(void);

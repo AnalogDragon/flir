@@ -234,10 +234,9 @@ void PowerDown(void){
 }
 
 
-typedef  void (*pFunction)(void);
-pFunction Jump_To_Application;
 
 void SleepMode(void){
+	pFunction Jump_To_Application;
 	
 	if(SysState.SysFlag.bit.Sleep){
 		
@@ -249,12 +248,9 @@ void SleepMode(void){
 			if(!KEY1 || !KEY2 || !KEY3 || !KEY4)
 				break;
 		}
-		
-		Jump_To_Application = (pFunction)*(__IO uint32_t*) (APP_ADDR + 4);
-		__set_MSP(*(__IO uint32_t*) APP_ADDR);
+		Jump_To_Application = (pFunction)*(__IO uint32_t*) (APP_ROOT_ADDR + 4);
+		__set_MSP(*(__IO uint32_t*) APP_ROOT_ADDR);
 		Jump_To_Application();
-		
-		while(1);
 	}
 }
 
@@ -343,10 +339,9 @@ u8 Play_BadApple(void){
 				data[(PixLg-1)-j][(PixLg-1)-l]=RW_Buf[l];
 			}
 		}
-		get_img();      //插值转换为rgb图片
+		get_img();      //转换为rgb图片
 		Draw_img();       //显示图片
 		logo_move();       //运行指示
-// 		LED0=~LED0;     //刷新率测试
 		delay_ms(42);
 		i++;
 	}while(File_Byte>=i && KEY_Scan(1)==0 );
@@ -371,5 +366,73 @@ void PlayVF(void){
 			}
 		}
 	}
+}
+
+
+
+void Get_CMD(void){
+	pFunction Jump_To_Application;
+	
+	switch(USART1_DATA.USART_RX_NUM){
+		
+		case 0:
+			SysState.SysFlag.bit.UsartFlag = 0;
+			break;
+		
+		case 1:
+		case 17:
+			SysState.SysFlag.bit.UsartFlag = 1;
+			break;
+		
+		case 2:
+			SysState.SysFlag.bit.UsartFlag = 2;
+			break;
+		
+		case 5:	//关闭中断、DMA与气其他外设，调用boot的welcome函数
+			Draw_Upgrading();
+			delay_ms(20);
+			NVIC_init(DISABLE);
+			NVIC_SetVectorTable(NVIC_VectTab_FLASH,BOOT_ROOT_ADDR&0xFFFFF);			//中断指针指向boot
+ 			Jump_To_Application = (pFunction)(__IO uint32_t*)(BOOT_DELAY_ADDR);	//初始化boot的delay函数
+			Jump_To_Application();
+ 			Jump_To_Application = (pFunction)(__IO uint32_t*)(BOOT_USART_ADDR);	//boot的串口函数
+			Jump_To_Application();
+ 			Jump_To_Application = (pFunction)(__IO uint32_t*)(BOOT_LOAD_ADDR);	//load flash
+			Jump_To_Application();
+			USART1_DATA.USART_RX_NUM = 0;
+			NVIC_SystemReset();		
+			break;
+		
+		default:
+			SysState.SysFlag.bit.UsartFlag = 0;
+	}
+	
+}
+
+
+void NVIC_init(FunctionalState State){
+	
+	NVIC_InitTypeDef NVIC_InitStructure;
+	
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+	
+	NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn; 
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2; 
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2; 
+	NVIC_InitStructure.NVIC_IRQChannelCmd = State;
+	NVIC_Init(&NVIC_InitStructure);
+	
+	NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=3;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = State;
+	NVIC_Init(&NVIC_InitStructure);
+	
+	NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel4_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = State;
+	NVIC_Init(&NVIC_InitStructure);
+	
 }
 

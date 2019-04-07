@@ -173,24 +173,24 @@ u8 ShutDownAMG8833(void){
 
 void data_push(void){
 	u8 i;
-	ext[0]=0;
+	ext[0]=-0x7fff;
 	ext[1]=0x7fff;
 	
 	for(i=0;i<64;i++){
 			
 		if(PriData[i/8][i%8]>ext[0]){	//遍历最值
-			ext[0]=PriData[i/8][i%8];
+			ext[0]=(long)PriData[i/8][i%8];
 			ext_add[0]=i;
 		}
 		if(PriData[i/8][i%8]<ext[1]){
-			ext[1]=PriData[i/8][i%8];
+			ext[1]=(long)PriData[i/8][i%8];
 			ext_add[1]=i;
 		}
 	
 #if (Size == SIZEx5)
-		data[PixLg-1-(i / 8 * PixGain + 2)][i % 8 * PixGain + 2] = PriData[i/8][i%8];//数据填充
+		data[PixLg-1-(i / 8 * PixGain + 2)][i % 8 * PixGain + 2] = (long)PriData[i/8][i%8];//数据填充
 #elif (Size == SIZEx8)
-		data[PixLg-1-(i / 8 * PixGain + 1)][i % 8 * PixGain + 1] = PriData[i/8][i%8];
+		data[PixLg-1-(i / 8 * PixGain + 1)][i % 8 * PixGain + 1] = (long)PriData[i/8][i%8];
 #endif
 	
 	}
